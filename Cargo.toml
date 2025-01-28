@@ -1,0 +1,18 @@
+[package]
+name = "ring-zk"
+version = "0.1.0"
+authors = ["AlvinHon <alvin.cpp@gmail.com>"]
+edition = "2021"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/AlvinHon/ring-zk"
+description = ""
+
+
+[lib]
+name = "ring_zk"
+path = "src/lib.rs"
+
+[dependencies]
+num = "0.4"
+poly-ring-xnp1 = {git="https://github.com/AlvinHon/poly-ring"}

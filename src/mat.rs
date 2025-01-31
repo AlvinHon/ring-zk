@@ -7,7 +7,7 @@ use rand::{distributions::uniform::SampleUniform, Rng};
 use crate::polynomial::rand_polynomial_within;
 
 /// A matrix over polynomial rings Z\[x]/(x^n+1).
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Mat<T, const N: usize> {
     pub(crate) polynomials: Vec<Vec<Polynomial<T, N>>>,
 }
@@ -55,6 +55,7 @@ impl<T, const N: usize> Mat<T, N> {
         (m, n)
     }
 
+    #[allow(clippy::needless_range_loop)]
     pub fn dot(&self, other: &Mat<T, N>) -> Mat<T, N>
     where
         T: Zero + One + Clone,
@@ -77,6 +78,7 @@ impl<T, const N: usize> Mat<T, N> {
         Mat { polynomials }
     }
 
+    #[allow(clippy::needless_range_loop)]
     pub fn add(&self, other: &Mat<T, N>) -> Mat<T, N>
     where
         T: Zero + One + Clone,

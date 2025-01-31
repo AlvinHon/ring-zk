@@ -1,0 +1,151 @@
+use std::ops::{Add, Mul, Sub};
+
+use num::{Integer, One, Signed, Zero};
+use poly_ring_xnp1::Polynomial;
+use rand::{distributions::uniform::SampleUniform, Rng};
+
+use crate::{mat::Mat, params::Params};
+
+pub struct CommitmentKey<I, const N: usize>
+where
+    I: Integer + Signed + Clone + SampleUniform,
+    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
+{
+    pub(crate) a1: Mat<I, N>,
+    pub(crate) a2: Mat<I, N>,
+}
+
+impl<I, const N: usize> CommitmentKey<I, N>
+where
+    I: Integer + Signed + Clone + SampleUniform,
+    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
+{
+    pub fn new(rng: &mut impl Rng, params: &Params<I>) -> Self {
+        let Params { q, n, k, l, .. } = params.clone();
+
+        // a1 is a polynomial matrix of size n x k
+        // a1 = [I_n a1'], where a1 is a polynomial matrix of size n x (k-n)
+        let a1 = {
+            let mut tmp = Mat::<I, N>::from_element(n, n, Polynomial::<I, N>::one());
+            let a1_prime = Mat::<_, N>::rand(rng, n, k - n, q.clone());
+            tmp.extend_cols(a1_prime);
+            tmp
+        };
+
+        // a2 is a polynomial matrix of size l x k
+        // a2 = [0_lxn I_l a2], where a2 is a polynomial matrix of size l x (k-n-l)
+        let a2 = {
+            let mut tmp = Mat::<I, N>::from_element(l, n, Polynomial::<I, N>::zero());
+            let i_l = Mat::<_, N>::from_element(l, l, Polynomial::<I, N>::one());
+            let a2_prime = Mat::<_, N>::rand(rng, l, k - n - l, q.clone());
+            tmp.extend_cols(i_l);
+            tmp.extend_cols(a2_prime);
+            tmp
+        };
+
+        CommitmentKey { a1, a2 }
+    }
+
+    pub fn commit(
+        &self,
+        rng: &mut impl Rng,
+        params: &Params<I>,
+        x: Vec<Polynomial<I, N>>,
+    ) -> (Commitment<I, N>, Opening<I, N>) {
+        let Params { b, n, k, l, .. } = params.clone();
+        assert_eq!(l, x.len());
+
+        let x_mat = Mat::<I, N>::from_vec(x.clone());
+        let r = Mat::<I, N>::rand(rng, k, 1, b.clone());
+        // TODO norm_2(r_i) must be less or equal to 4*sigma*sqrt(N)
+
+        let a = {
+            // [a1 a2]
+            let mut a1 = self.a1.clone();
+            a1.extend_rows(self.a2.clone());
+            a1
+        };
+
+        let z = {
+            // [0_n x]
+            let mut tmp = Mat::<I, N>::from_element(n, 1, Polynomial::<I, N>::zero());
+            tmp.extend_rows(x_mat);
+            tmp
+        };
+
+        // [c1 c2] = [a1 a2] * r + [0_n x]
+        let c = a.dot(&r).add(&z);
+
+        (Commitment { c }, Opening { x, r, _f: None })
+    }
+}
+
+pub struct Commitment<I, const N: usize> {
+    pub(crate) c: Mat<I, N>,
+}
+
+impl<I, const N: usize> Commitment<I, N> {
+    pub fn verify(
+        &self,
+        params: &Params<I>,
+        ck: &CommitmentKey<I, N>,
+        opening: &Opening<I, N>,
+    ) -> bool
+    where
+        I: Integer + Signed + Clone + SampleUniform,
+        for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
+    {
+        let Params { n, .. } = params.clone();
+
+        let a = {
+            // [a1 a2]
+            let mut a1 = ck.a1.clone();
+            a1.extend_rows(ck.a2.clone());
+            a1
+        };
+
+        let z = {
+            // [0_n x]
+            let mut tmp = Mat::<I, N>::from_element(n, 1, Polynomial::<I, N>::zero());
+            tmp.extend_rows(Mat::<_, N>::from_vec(opening.x.clone()));
+            tmp
+        };
+
+        // f * [c1 c2] = [a1 a2] * r + f * [0_n x]
+        let c = a.dot(&opening.r).add(&z); // TODO apply f
+
+        c == self.c
+    }
+}
+
+pub struct Opening<I, const N: usize> {
+    /// The committed value.
+    pub(crate) x: Vec<Polynomial<I, N>>,
+    /// The randomness used in the commit method.
+    pub(crate) r: Mat<I, N>,
+    /// Additional randomness for randomizing the commitment.
+    /// This polynomial must be **non-zero** in Challenge Space.
+    /// None means the polynomial `f` is 1 for verification.
+    pub(crate) _f: Option<Polynomial<I, N>>,
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::params::params_1;
+
+    use super::*;
+
+    const N: usize = 4;
+
+    #[test]
+    fn test_commitment() {
+        let mut rng = rand::thread_rng();
+        let params = params_1();
+        let ck = CommitmentKey::new(&mut rng, &params);
+
+        let x = vec![Polynomial::<i64, N>::from_coeffs(vec![1, 2, 3, 4])];
+
+        let (com, open) = ck.commit(&mut rng, &params, x.clone());
+        assert!(com.verify(&params, &ck, &open));
+    }
+}

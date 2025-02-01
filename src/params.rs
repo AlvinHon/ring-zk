@@ -32,8 +32,10 @@ where
 
 /// Parameters Set 1. The message length (l) is 1.
 pub fn params_1() -> Params<i64> {
+    let q = 3515337053_i64; // 32 bits
+    assert!(q % 8 == 5, "q must be 2*d  + 1 mod 4d. Use d = 2.");
     Params {
-        q: 2147483647i64,
+        q,
         b: 1,
         n: 1,
         k: 3,

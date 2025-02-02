@@ -1,14 +1,16 @@
-use std::ops::{Add, Mul, Sub};
-
-use num::{Integer, One, Signed, Zero};
+use num::{cast::AsPrimitive, integer::Roots, Integer, One, Signed, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::{distributions::uniform::SampleUniform, Rng};
+use std::{
+    iter::Sum,
+    ops::{Add, Mul, Sub},
+};
 
 use crate::{mat::Mat, params::Params};
 
 pub struct CommitmentKey<I, const N: usize>
 where
-    I: Integer + Signed + Clone + SampleUniform,
+    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + AsPrimitive<usize>,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     pub(crate) a1: Mat<I, N>,
@@ -17,7 +19,7 @@ where
 
 impl<I, const N: usize> CommitmentKey<I, N>
 where
-    I: Integer + Signed + Clone + SampleUniform,
+    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + AsPrimitive<usize>,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     pub fn new(rng: &mut impl Rng, params: &Params<I>) -> Self {
@@ -27,7 +29,7 @@ where
         // a1 = [I_n a1'], where a1 is a polynomial matrix of size n x (k-n)
         let a1 = {
             let mut tmp = Mat::<I, N>::from_element(n, n, Polynomial::<I, N>::one());
-            let a1_prime = Mat::<_, N>::rand(rng, n, k - n, q.clone());
+            let a1_prime = Mat::<_, N>::rand(rng, n, k - n, q);
             tmp.extend_cols(a1_prime);
             tmp
         };
@@ -37,7 +39,7 @@ where
         let a2 = {
             let mut tmp = Mat::<I, N>::from_element(l, n, Polynomial::<I, N>::zero());
             let i_l = Mat::<_, N>::from_element(l, l, Polynomial::<I, N>::one());
-            let a2_prime = Mat::<_, N>::rand(rng, l, k - n - l, q.clone());
+            let a2_prime = Mat::<_, N>::rand(rng, l, k - n - l, q);
             tmp.extend_cols(i_l);
             tmp.extend_cols(a2_prime);
             tmp
@@ -56,8 +58,16 @@ where
         assert_eq!(l, x.len());
 
         let x_mat = Mat::<I, N>::from_vec(x.clone());
-        let r = Mat::<I, N>::rand(rng, k, 1, b.clone());
-        // TODO norm_2(r_i) must be less or equal to 4*sigma*sqrt(N)
+        let r = {
+            let mut tmp;
+            loop {
+                tmp = Mat::<I, N>::rand(rng, k, 1, b);
+                if params.check_commit_constraint(&tmp) {
+                    break;
+                }
+            }
+            tmp
+        };
 
         let a = {
             // [a1 a2]
@@ -92,10 +102,15 @@ impl<I, const N: usize> Commitment<I, N> {
         opening: &Opening<I, N>,
     ) -> bool
     where
-        I: Integer + Signed + Clone + SampleUniform,
+        I: Integer + Signed + Sum + Roots + Clone + SampleUniform + AsPrimitive<usize>,
         for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
     {
         let Params { n, .. } = params.clone();
+        let Opening { x, r, .. } = opening;
+
+        if !params.check_commit_constraint(r) {
+            return false;
+        }
 
         let a = {
             // [a1 a2]
@@ -107,12 +122,12 @@ impl<I, const N: usize> Commitment<I, N> {
         let z = {
             // [0_n x]
             let mut tmp = Mat::<I, N>::from_element(n, 1, Polynomial::<I, N>::zero());
-            tmp.extend_rows(Mat::<_, N>::from_vec(opening.x.clone()));
+            tmp.extend_rows(Mat::<_, N>::from_vec(x.clone()));
             tmp
         };
 
         // f * [c1 c2] = [a1 a2] * r + f * [0_n x]
-        let c = a.dot(&opening.r).add(&z); // TODO apply f
+        let c = a.dot(r).add(&z); // TODO apply f
 
         c == self.c
     }

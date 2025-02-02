@@ -1,4 +1,8 @@
-use num::{cast::AsPrimitive, integer::Roots, Integer};
+use std::iter::Sum;
+
+use num::{cast::AsPrimitive, integer::Roots, Integer, Signed};
+
+use crate::{mat::Mat, polynomial::norm_2};
 
 #[derive(Clone)]
 pub struct Params<I> {
@@ -21,12 +25,21 @@ pub struct Params<I> {
 
 impl<I> Params<I>
 where
-    I: Integer + Clone + AsPrimitive<usize>,
+    I: Integer + Signed + Sum + Roots + Clone + AsPrimitive<usize>,
 {
     /// The standard deviation used in the zero-knowledge proof.
-    pub fn standard_deviation(&self, deg_n: usize) -> usize {
+    pub(crate) fn standard_deviation(&self, deg_n: usize) -> usize {
         // sigma = 11 * kappa * b * sqrt(k*deg_n)
         self.b.as_() * (11 * self.kappa) * (self.k * deg_n).sqrt()
+    }
+
+    /// Check the commitment constraint. norm_2(r_i) must be less or equal to 4*sigma*sqrt(N).
+    pub(crate) fn check_commit_constraint<const N: usize>(&self, r: &Mat<I, N>) -> bool {
+        let sigma = self.standard_deviation(N);
+        let constraint = 4 * sigma * N.sqrt();
+        r.polynomials
+            .iter()
+            .all(|r_i| r_i.iter().all(|r_ij| norm_2(r_ij).as_() <= constraint))
     }
 }
 

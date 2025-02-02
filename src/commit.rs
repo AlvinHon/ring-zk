@@ -6,7 +6,7 @@ use std::{
     ops::{Add, Mul, Sub},
 };
 
-use crate::{mat::Mat, params::Params};
+use crate::{mat::Mat, params::Params, polynomial::rand_polynomial_within};
 
 pub struct CommitmentKey<I, const N: usize>
 where
@@ -29,7 +29,7 @@ where
         // a1 = [I_n a1'], where a1 is a polynomial matrix of size n x (k-n)
         let a1 = {
             let mut tmp = Mat::<I, N>::from_element(n, n, Polynomial::<I, N>::one());
-            let a1_prime = Mat::<_, N>::rand(rng, n, k - n, q);
+            let a1_prime = Mat::<_, N>::new_with(n, k - n, || rand_polynomial_within(rng, q));
             tmp.extend_cols(a1_prime);
             tmp
         };
@@ -39,7 +39,7 @@ where
         let a2 = {
             let mut tmp = Mat::<I, N>::from_element(l, n, Polynomial::<I, N>::zero());
             let i_l = Mat::<_, N>::from_element(l, l, Polynomial::<I, N>::one());
-            let a2_prime = Mat::<_, N>::rand(rng, l, k - n - l, q);
+            let a2_prime = Mat::<_, N>::new_with(l, k - n - l, || rand_polynomial_within(rng, q));
             tmp.extend_cols(i_l);
             tmp.extend_cols(a2_prime);
             tmp
@@ -61,7 +61,7 @@ where
         let r = {
             let mut tmp;
             loop {
-                tmp = Mat::<I, N>::rand(rng, k, 1, b);
+                tmp = Mat::<I, N>::new_with(k, 1, || rand_polynomial_within(rng, b));
                 if params.check_commit_constraint(&tmp) {
                     break;
                 }

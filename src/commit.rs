@@ -28,8 +28,8 @@ where
         // a1 is a polynomial matrix of size n x k
         // a1 = [I_n a1'], where a1 is a polynomial matrix of size n x (k-n)
         let a1 = {
-            let mut tmp = Mat::<I, N>::from_element(n, n, Polynomial::<I, N>::one());
-            let a1_prime = Mat::<_, N>::new_with(n, k - n, || rand_polynomial_within(rng, q));
+            let mut tmp = Mat::<I, N>::diag(n, n, Polynomial::<I, N>::one());
+            let a1_prime = Mat::<I, N>::new_with(n, k - n, || rand_polynomial_within(rng, q));
             tmp.extend_cols(a1_prime);
             tmp
         };
@@ -38,8 +38,8 @@ where
         // a2 = [0_lxn I_l a2], where a2 is a polynomial matrix of size l x (k-n-l)
         let a2 = {
             let mut tmp = Mat::<I, N>::from_element(l, n, Polynomial::<I, N>::zero());
-            let i_l = Mat::<_, N>::from_element(l, l, Polynomial::<I, N>::one());
-            let a2_prime = Mat::<_, N>::new_with(l, k - n - l, || rand_polynomial_within(rng, q));
+            let i_l = Mat::<I, N>::diag(l, l, Polynomial::<I, N>::one());
+            let a2_prime = Mat::<I, N>::new_with(l, k - n - l, || rand_polynomial_within(rng, q));
             tmp.extend_cols(i_l);
             tmp.extend_cols(a2_prime);
             tmp
@@ -86,7 +86,7 @@ where
         // [c1 c2] = [a1 a2] * r + [0_n x]
         let c = a.dot(&r).add(&z);
 
-        (Commitment { c }, Opening { x, r, _f: None })
+        (Commitment { c }, Opening { x, r, f: None })
     }
 }
 
@@ -106,7 +106,7 @@ impl<I, const N: usize> Commitment<I, N> {
         for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
     {
         let Params { n, .. } = params.clone();
-        let Opening { x, r, .. } = opening;
+        let Opening { x, r, f } = opening;
 
         if !params.check_commit_constraint(r) {
             return false;
@@ -122,14 +122,19 @@ impl<I, const N: usize> Commitment<I, N> {
         let z = {
             // [0_n x]
             let mut tmp = Mat::<I, N>::from_element(n, 1, Polynomial::<I, N>::zero());
-            tmp.extend_rows(Mat::<_, N>::from_vec(x.clone()));
+            tmp.extend_rows(Mat::<I, N>::from_vec(x.clone()));
             tmp
         };
 
         // f * [c1 c2] = [a1 a2] * r + f * [0_n x]
-        let c = a.dot(r).add(&z); // TODO apply f
-
-        c == self.c
+        match f {
+            Some(f) => {
+                let lhs = f.dot(&self.c);
+                let rhs = a.dot(r).add(&f.dot(&z));
+                lhs == rhs
+            }
+            None => a.dot(r).add(&z) == self.c,
+        }
     }
 }
 
@@ -138,10 +143,10 @@ pub struct Opening<I, const N: usize> {
     pub(crate) x: Vec<Polynomial<I, N>>,
     /// The randomness used in the commit method.
     pub(crate) r: Mat<I, N>,
-    /// Additional randomness for randomizing the commitment.
-    /// This polynomial must be **non-zero** in Challenge Space.
-    /// None means the polynomial `f` is 1 for verification.
-    pub(crate) _f: Option<Polynomial<I, N>>,
+    /// Additional randomness for randomizing the opening.
+    /// These polynomials in the matrix must be **non-zero** in Challenge Space.
+    /// None means the `f` is the `identity`` for verification.
+    pub(crate) f: Option<Mat<I, N>>,
 }
 
 #[cfg(test)]

@@ -2,9 +2,7 @@ use std::ops::{Add, Mul, Sub};
 
 use num::{Integer, One, Zero};
 use poly_ring_xnp1::Polynomial;
-use rand::{distributions::uniform::SampleUniform, Rng};
-
-use crate::polynomial::rand_polynomial_within;
+use rand::distributions::uniform::SampleUniform;
 
 /// A matrix over polynomial rings Z\[x]/(x^n+1).
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -19,6 +17,19 @@ impl<T, const N: usize> Mat<T, N> {
         T: Clone,
     {
         let polynomials = vec![vec![element.clone(); n]; m];
+        Mat { polynomials }
+    }
+
+    /// Create a diagonal matrix (m x n) with the given polynomial on the diagonal.
+    pub fn diag(m: usize, n: usize, element: Polynomial<T, N>) -> Self
+    where
+        T: Zero + One + Clone,
+        for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Sub<Output = T>,
+    {
+        let mut polynomials = vec![vec![Polynomial::<T, N>::zero(); n]; m];
+        for i in 0..m {
+            polynomials[i][i] = element.clone();
+        }
         Mat { polynomials }
     }
 

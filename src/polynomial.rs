@@ -1,6 +1,7 @@
-use num::{integer::Roots, Integer, Signed};
+use num::{integer::Roots, Integer, NumCast, Signed};
 use poly_ring_xnp1::Polynomial;
 use rand::{distr::uniform::SampleUniform, Rng};
+use rand_distr::{Distribution, Normal};
 use std::iter::Sum;
 
 /// Returns a random polynomial with coefficients in the range `[-bound, bound]`.
@@ -21,6 +22,24 @@ where
 
     let range = lower.clone()..upper.clone();
     let coeffs = (0..N).map(|_| rng.random_range(range.clone())).collect();
+
+    Polynomial::new(coeffs)
+}
+
+pub(crate) fn random_polynomial_in_normal_distribution<I, const N: usize>(
+    rng: &mut impl Rng,
+    mean: f64,
+    std_dev: f64,
+) -> Polynomial<I, N>
+where
+    I: Integer + Clone + NumCast,
+{
+    let normal = Normal::new(mean, std_dev).unwrap();
+    let coeffs = normal
+        .sample_iter(rng)
+        .take(N)
+        .map(|x| NumCast::from(x).unwrap())
+        .collect();
 
     Polynomial::new(coeffs)
 }
@@ -78,5 +97,16 @@ mod tests {
     fn test_norm_infinity() {
         let p = Polynomial::<_, N>::new(vec![1, -2, 3, -4]);
         assert_eq!(norm_infinity(&p), 4);
+    }
+
+    #[test]
+    fn test_random_polynomial_in_normal_distribution() {
+        let mut rng = rand::rng();
+        let mean = 0.0;
+        let std_dev = 10.0;
+        let p = random_polynomial_in_normal_distribution::<i64, N>(&mut rng, mean, std_dev);
+        p.iter().for_each(|c| {
+            assert!(-20 <= *c && *c <= 20);
+        });
     }
 }

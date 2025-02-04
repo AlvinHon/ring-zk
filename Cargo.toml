@@ -17,3 +17,4 @@ path = "src/lib.rs"
 num = "0.4"
 poly-ring-xnp1 = {git="https://github.com/AlvinHon/poly-ring"}
 rand = "0.9"
+rand_distr = "0.5"

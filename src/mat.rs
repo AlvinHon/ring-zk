@@ -27,8 +27,8 @@ impl<T, const N: usize> Mat<T, N> {
         for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Sub<Output = T>,
     {
         let mut polynomials = vec![vec![Polynomial::<T, N>::zero(); n]; m];
-        for i in 0..m {
-            polynomials[i][i] = element.clone();
+        for (i, ps_i) in polynomials.iter_mut().enumerate() {
+            ps_i[i] = element.clone();
         }
         Mat { polynomials }
     }

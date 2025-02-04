@@ -1,12 +1,12 @@
 use num::{cast::AsPrimitive, integer::Roots, Integer, One, Signed, Zero};
 use poly_ring_xnp1::Polynomial;
-use rand::{distributions::uniform::SampleUniform, Rng};
+use rand::{distr::uniform::SampleUniform, Rng};
 use std::{
     iter::Sum,
     ops::{Add, Mul, Sub},
 };
 
-use crate::{mat::Mat, params::Params, polynomial::rand_polynomial_within};
+use crate::{mat::Mat, params::Params, polynomial::random_polynomial_within};
 
 pub struct CommitmentKey<I, const N: usize>
 where
@@ -29,7 +29,7 @@ where
         // a1 = [I_n a1'], where a1 is a polynomial matrix of size n x (k-n)
         let a1 = {
             let mut tmp = Mat::<I, N>::diag(n, n, Polynomial::<I, N>::one());
-            let a1_prime = Mat::<I, N>::new_with(n, k - n, || rand_polynomial_within(rng, q));
+            let a1_prime = Mat::<I, N>::new_with(n, k - n, || random_polynomial_within(rng, q));
             tmp.extend_cols(a1_prime);
             tmp
         };
@@ -39,7 +39,7 @@ where
         let a2 = {
             let mut tmp = Mat::<I, N>::from_element(l, n, Polynomial::<I, N>::zero());
             let i_l = Mat::<I, N>::diag(l, l, Polynomial::<I, N>::one());
-            let a2_prime = Mat::<I, N>::new_with(l, k - n - l, || rand_polynomial_within(rng, q));
+            let a2_prime = Mat::<I, N>::new_with(l, k - n - l, || random_polynomial_within(rng, q));
             tmp.extend_cols(i_l);
             tmp.extend_cols(a2_prime);
             tmp
@@ -61,7 +61,7 @@ where
         let r = {
             let mut tmp;
             loop {
-                tmp = Mat::<I, N>::new_with(k, 1, || rand_polynomial_within(rng, b));
+                tmp = Mat::<I, N>::new_with(k, 1, || random_polynomial_within(rng, b));
                 if params.check_commit_constraint(&tmp) {
                     break;
                 }
@@ -159,7 +159,7 @@ mod tests {
 
     #[test]
     fn test_commitment() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let params = params_1();
         let ck = CommitmentKey::new(&mut rng, &params);
 

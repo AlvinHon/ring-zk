@@ -1,13 +1,13 @@
 use num::{integer::Roots, Integer, Signed};
 use poly_ring_xnp1::Polynomial;
-use rand::{distributions::uniform::SampleUniform, Rng};
+use rand::{distr::uniform::SampleUniform, Rng};
 use std::iter::Sum;
 
 /// Returns a random polynomial with coefficients in the range `[-bound, bound]`.
 ///
 /// ## Safety
 /// **bound** must be positive.
-pub(crate) fn rand_polynomial_within<I, const N: usize>(
+pub(crate) fn random_polynomial_within<I, const N: usize>(
     rng: &mut impl Rng,
     bound: I,
 ) -> Polynomial<I, N>
@@ -20,7 +20,7 @@ where
     upper.inc(); // inclusive bound
 
     let range = lower.clone()..upper.clone();
-    let coeffs = (0..N).map(|_| rng.gen_range(range.clone())).collect();
+    let coeffs = (0..N).map(|_| rng.random_range(range.clone())).collect();
 
     Polynomial::new(coeffs)
 }
@@ -53,10 +53,10 @@ mod tests {
     const N: usize = 4;
 
     #[test]
-    fn test_rand_polynomial_within() {
-        let mut rng = rand::thread_rng();
+    fn test_random_polynomial_within() {
+        let mut rng = rand::rng();
         let bound = 10;
-        let p = rand_polynomial_within::<_, N>(&mut rng, bound);
+        let p = random_polynomial_within::<_, N>(&mut rng, bound);
         for c in p.iter() {
             assert!(-bound <= *c && *c <= bound);
         }

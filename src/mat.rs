@@ -2,7 +2,7 @@ use std::ops::{Add, Mul, Sub};
 
 use num::{Integer, One, Zero};
 use poly_ring_xnp1::Polynomial;
-use rand::distributions::uniform::SampleUniform;
+use rand::distr::uniform::SampleUniform;
 
 /// A matrix over polynomial rings Z\[x]/(x^n+1).
 #[derive(Clone, Debug, PartialEq, Eq)]

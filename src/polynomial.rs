@@ -1,8 +1,9 @@
+use std::iter::Sum;
+
 use num::{integer::Roots, Integer, NumCast, Signed};
 use poly_ring_xnp1::Polynomial;
 use rand::{distr::uniform::SampleUniform, Rng};
 use rand_distr::{Distribution, Normal};
-use std::iter::Sum;
 
 /// Returns a random polynomial with coefficients in the range `[-bound, bound]`.
 ///

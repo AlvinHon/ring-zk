@@ -1,16 +1,17 @@
-use num::{cast::AsPrimitive, integer::Roots, Integer, One, Signed, Zero};
-use poly_ring_xnp1::Polynomial;
-use rand::{distr::uniform::SampleUniform, Rng};
 use std::{
     iter::Sum,
     ops::{Add, Mul, Sub},
 };
 
+use num::{integer::Roots, Integer, NumCast, One, Signed, Zero};
+use poly_ring_xnp1::Polynomial;
+use rand::{distr::uniform::SampleUniform, Rng};
+
 use crate::{mat::Mat, params::Params, polynomial::random_polynomial_within};
 
 pub struct CommitmentKey<I, const N: usize>
 where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + AsPrimitive<usize>,
+    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     pub(crate) a1: Mat<I, N>,
@@ -19,7 +20,7 @@ where
 
 impl<I, const N: usize> CommitmentKey<I, N>
 where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + AsPrimitive<usize>,
+    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     pub fn new(rng: &mut impl Rng, params: &Params<I>) -> Self {
@@ -29,7 +30,8 @@ where
         // a1 = [I_n a1'], where a1 is a polynomial matrix of size n x (k-n)
         let a1 = {
             let mut tmp = Mat::<I, N>::diag(n, n, Polynomial::<I, N>::one());
-            let a1_prime = Mat::<I, N>::new_with(n, k - n, || random_polynomial_within(rng, q));
+            let a1_prime =
+                Mat::<I, N>::new_with(n, k - n, || random_polynomial_within(rng, q.clone()));
             tmp.extend_cols(a1_prime);
             tmp
         };
@@ -39,7 +41,8 @@ where
         let a2 = {
             let mut tmp = Mat::<I, N>::from_element(l, n, Polynomial::<I, N>::zero());
             let i_l = Mat::<I, N>::diag(l, l, Polynomial::<I, N>::one());
-            let a2_prime = Mat::<I, N>::new_with(l, k - n - l, || random_polynomial_within(rng, q));
+            let a2_prime =
+                Mat::<I, N>::new_with(l, k - n - l, || random_polynomial_within(rng, q.clone()));
             tmp.extend_cols(i_l);
             tmp.extend_cols(a2_prime);
             tmp
@@ -61,7 +64,7 @@ where
         let r = {
             let mut tmp;
             loop {
-                tmp = Mat::<I, N>::new_with(k, 1, || random_polynomial_within(rng, b));
+                tmp = Mat::<I, N>::new_with(k, 1, || random_polynomial_within(rng, b.clone()));
                 if params.check_commit_constraint(&tmp) {
                     break;
                 }
@@ -102,7 +105,7 @@ impl<I, const N: usize> Commitment<I, N> {
         opening: &Opening<I, N>,
     ) -> bool
     where
-        I: Integer + Signed + Sum + Roots + Clone + SampleUniform + AsPrimitive<usize>,
+        I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
         for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
     {
         let Params { n, .. } = params.clone();

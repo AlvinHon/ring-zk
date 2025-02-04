@@ -1,7 +1,8 @@
+use std::ops::{Add, Mul, Neg, Sub};
+
 use num::Integer;
 use poly_ring_xnp1::Polynomial;
 use rand::{distr::uniform::SampleUniform, seq::SliceRandom, Rng};
-use std::ops::{Add, Mul, Neg, Sub};
 
 /// Create a random polynomial in Challenge Space C.
 /// The Challenge Space C is defined as  `{c in R_q | norm_infinity(c) = 1, norm_1(c) = kappa}`.

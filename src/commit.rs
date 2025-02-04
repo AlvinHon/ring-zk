@@ -14,8 +14,8 @@ where
     I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
-    pub(crate) a1: Mat<I, N>,
-    pub(crate) a2: Mat<I, N>,
+    pub(crate) a1: Mat<I, N>, // n x k matrix
+    pub(crate) a2: Mat<I, N>, // l x k matrix
 }
 
 impl<I, const N: usize> CommitmentKey<I, N>
@@ -93,6 +93,7 @@ where
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Commitment<I, const N: usize> {
     pub(crate) c: Mat<I, N>,
 }

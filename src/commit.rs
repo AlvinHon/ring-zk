@@ -133,8 +133,8 @@ impl<I, const N: usize> Commitment<I, N> {
         // f * [c1 c2] = [a1 a2] * r + f * [0_n x]
         match f {
             Some(f) => {
-                let lhs = f.dot(&self.c);
-                let rhs = a.dot(r).add(&f.dot(&z));
+                let lhs = self.c.componentwise_mul(f);
+                let rhs = a.dot(r).add(&z.componentwise_mul(f));
                 lhs == rhs
             }
             None => a.dot(r).add(&z) == self.c,
@@ -148,9 +148,9 @@ pub struct Opening<I, const N: usize> {
     /// The randomness used in the commit method.
     pub(crate) r: Mat<I, N>,
     /// Additional randomness for randomizing the opening.
-    /// These polynomials in the matrix must be **non-zero** in Challenge Space.
+    /// The polynomial must be **non-zero** in Challenge Space.
     /// None means the `f` is the `identity`` for verification.
-    pub(crate) f: Option<Mat<I, N>>,
+    pub(crate) f: Option<Polynomial<I, N>>,
 }
 
 #[cfg(test)]

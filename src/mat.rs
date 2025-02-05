@@ -121,14 +121,16 @@ impl<T, const N: usize> Mat<T, N> {
     }
 
     /// Multiply the matrix by a scalar.
-    pub fn componentwise_mul(&mut self, element: Polynomial<T, N>)
+    pub fn componentwise_mul(&self, element: &Polynomial<T, N>) -> Mat<T, N>
     where
         T: Zero + One + Clone,
         for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Sub<Output = T>,
     {
-        self.polynomials
+        let mut polynomials = self.polynomials.clone();
+        polynomials
             .iter_mut()
             .for_each(|p| p.iter_mut().for_each(|q| *q = q.clone() * element.clone()));
+        Mat { polynomials }
     }
 
     /// Extend the matrix by adding rows.
@@ -292,13 +294,13 @@ mod tests {
         let a_0_1 = Polynomial::<i32, N>::new(vec![4, 5, 6]);
 
         // 1x2 matrix
-        let mut a = Mat {
+        let a = Mat {
             polynomials: vec![vec![a_0_0.clone(), a_0_1.clone()]],
         };
 
         let b = Polynomial::<i32, N>::new(vec![1, 2, 3]);
 
-        a.componentwise_mul(b.clone());
+        let a = a.componentwise_mul(&b);
 
         assert_eq!(
             a.polynomials,

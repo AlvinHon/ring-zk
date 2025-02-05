@@ -140,6 +140,14 @@ impl<I, const N: usize> Commitment<I, N> {
             None => a.dot(r).add(&z) == self.c,
         }
     }
+
+    /// Split the commitment into two parts: c1 (dim: n x 1) and c2 (dim: l x 1).
+    pub(crate) fn c1_c2(&self, params: &Params<I>) -> (Mat<I, N>, Mat<I, N>)
+    where
+        I: Clone,
+    {
+        self.c.clone().split_rows(params.n)
+    }
 }
 
 pub struct Opening<I, const N: usize> {

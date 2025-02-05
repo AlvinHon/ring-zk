@@ -147,6 +147,20 @@ impl<T, const N: usize> Mat<T, N> {
         self.polynomials.extend(other.polynomials);
     }
 
+    /// Split the matrix by rows.
+    /// Original dimensions: m x n;
+    /// New dimensions: (m - r) x n and r x n
+    pub fn split_rows(mut self, r: usize) -> (Mat<T, N>, Mat<T, N>) {
+        let (m, _) = self.dim();
+        let b = self.polynomials.split_off(m - r);
+        (
+            Mat {
+                polynomials: self.polynomials,
+            },
+            Mat { polynomials: b },
+        )
+    }
+
     /// Extend the matrix by adding columns.
     /// Original dimensions: m x n;
     /// New dimensions: m x (n + n')
@@ -306,5 +320,21 @@ mod tests {
             a.polynomials,
             vec![vec![a_0_0.clone() * b.clone(), a_0_1.clone() * b.clone()]]
         );
+    }
+
+    #[test]
+    fn test_split_rows() {
+        let a_0 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        let a_1 = Polynomial::<i32, N>::new(vec![4, 5, 6]);
+
+        // 2x1 matrix
+        let a = Mat {
+            polynomials: vec![vec![a_0.clone()], vec![a_1.clone()]],
+        };
+
+        let (b, c) = a.split_rows(1);
+
+        assert_eq!(b.polynomials, vec![vec![a_0.clone()]]);
+        assert_eq!(c.polynomials, vec![vec![a_1.clone()]]);
     }
 }

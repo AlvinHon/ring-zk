@@ -9,6 +9,7 @@ use rand::Rng;
 use rand_distr::uniform::SampleUniform;
 
 use crate::{
+    challenge_space::random_polynomial_from_challenge_set,
     commit::{Commitment, CommitmentKey, Opening},
     mat::Mat,
     params::Params,
@@ -54,25 +55,29 @@ impl<I, const N: usize> OpenProofCommitment<I, N> {
         &self,
         rng: &mut impl Rng,
         params: &Params<I>,
-    ) -> (OpenProofVerifier, OpenProofChallenge)
+    ) -> (OpenProofVerifier<I, N>, OpenProofChallenge<I, N>)
     where
         I: Integer + Clone + SampleUniform,
     {
-        // todo!()
-        (OpenProofVerifier {}, OpenProofChallenge {})
+        let d = random_polynomial_from_challenge_set(rng, params.kappa);
+        (OpenProofVerifier { d: d.clone() }, OpenProofChallenge { d })
     }
 }
 
-pub struct OpenProofVerifier {}
+pub struct OpenProofVerifier<I, const N: usize> {
+    d: Polynomial<I, N>,
+}
 
-impl OpenProofVerifier {
+impl<I, const N: usize> OpenProofVerifier<I, N> {
     pub fn verify(&self, response: OpenProofResponse) -> bool {
         // todo!()
         true
     }
 }
 
-pub struct OpenProofChallenge {}
+pub struct OpenProofChallenge<I, const N: usize> {
+    d: Polynomial<I, N>,
+}
 
 pub struct OpenProofResponse {}
 
@@ -82,7 +87,7 @@ pub struct OpenProofProver<I, const N: usize> {
 }
 
 impl<I, const N: usize> OpenProofProver<I, N> {
-    pub fn create_response(&self, challenge: OpenProofChallenge) -> OpenProofResponse {
+    pub fn create_response(&self, challenge: OpenProofChallenge<I, N>) -> OpenProofResponse {
         // todo!()
         OpenProofResponse {}
     }

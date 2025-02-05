@@ -32,6 +32,7 @@ where
 /// Create a random polynomial in Set difference (C-bar) in Challenge Space C.
 /// Defines C-bar as `{c - c', where c, c' in C}`. This difference `c - c'` has
 /// a special property that the returned polynomial is invertible in `R_q`.
+#[allow(unused)]
 pub(crate) fn random_polynomial_from_challenge_set_difference<I, const N: usize>(
     rng: &mut impl Rng,
     kappa: usize,

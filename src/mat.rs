@@ -44,7 +44,7 @@ impl<T, const N: usize> Mat<T, N> {
     ///
     /// # Panics
     /// Panics if the matrix is not (m x 1).
-    pub fn to_vec(self) -> Vec<Polynomial<T, N>> {
+    pub fn one_d_mat_to_vec(self) -> Vec<Polynomial<T, N>> {
         self.polynomials
             .into_iter()
             .map(|p| {

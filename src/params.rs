@@ -42,6 +42,16 @@ where
                 .all(|r_ij| norm_2(r_ij).to_usize().unwrap() <= constraint)
         })
     }
+
+    /// Check the constraint for verification in zk protocol. norm_2(r_i) must be less or equal to 2*sigma*sqrt(N).
+    pub(crate) fn check_verify_constraint<const N: usize>(&self, r: &Mat<I, N>) -> bool {
+        let sigma = self.standard_deviation(N);
+        let constraint = 2 * sigma * N.sqrt();
+        r.polynomials.iter().all(|r_i| {
+            r_i.iter()
+                .all(|r_ij| norm_2(r_ij).to_usize().unwrap() <= constraint)
+        })
+    }
 }
 
 /// Parameters Set 1. The message length (l) is 1.

@@ -45,6 +45,7 @@ where
     Polynomial::new(coeffs)
 }
 
+#[allow(unused)]
 pub(crate) fn norm_1<I, const N: usize>(p: &Polynomial<I, N>) -> I
 where
     I: Integer + Signed + Sum + Clone,
@@ -59,6 +60,7 @@ where
     p.iter().map(|c| c.clone() * c.clone()).sum::<I>().sqrt()
 }
 
+#[allow(unused)]
 pub(crate) fn norm_infinity<I, const N: usize>(p: &Polynomial<I, N>) -> I
 where
     I: Integer + Signed + Sum + Clone,

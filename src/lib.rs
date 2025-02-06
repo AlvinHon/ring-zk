@@ -23,9 +23,7 @@ mod tests {
 
         let params = params_1();
         let ck = CommitmentKey::new(rng, &params);
-        let x = vec![poly_ring_xnp1::Polynomial::<i64, N>::from_coeffs(vec![
-            1, 2, 3, 4,
-        ])];
+        let x = params.prepare_value::<N>(vec![vec![1i64, 2, 3, 4]]);
 
         // 3-phase Sigma Protocol:
         // - First create commitment with information for proving the opening.

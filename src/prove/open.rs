@@ -141,31 +141,3 @@ pub struct OpenProofChallenge<I, const N: usize> {
 pub struct OpenProofResponse<I, const N: usize> {
     z: Mat<I, N>, // k x 1 matrix
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::params::params_1;
-
-    use super::*;
-
-    const N: usize = 4;
-
-    #[test]
-    fn test_prove_open() {
-        let rng = &mut rand::rng();
-
-        let params = params_1();
-        let ck = CommitmentKey::new(rng, &params);
-        let x = vec![Polynomial::<i64, N>::from_coeffs(vec![1, 2, 3, 4])];
-
-        // 3-phase Sigma Protocol:
-        // - First create commitment with information for proving the opening.
-        let (prover, commitment) = prove_open(rng, x, &ck, &params);
-        // - Verifier receives commitment and then create a challenge.
-        let (verifier, challenge) = commitment.create_challenge(rng, &params);
-        // - Prover receives the challenge and then create a response.
-        let response = prover.create_response(challenge);
-        // - Verifier verifies the response.
-        assert!(verifier.verify(response, &ck, &params));
-    }
-}

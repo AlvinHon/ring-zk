@@ -54,6 +54,24 @@ where
             .collect()
     }
 
+    /// Prepare the scalar for the commitment. The input is a vector of integers.
+    /// The generic parameter N indicates the maximum length of the integer vector. It must be a power
+    /// of two.
+    ///
+    /// This method is for wrapping the input scalar into a polynomial which is used as primitive element
+    /// in the library.
+    ///
+    /// ## Panics
+    /// Panics if the constant `N` is not a power of two.
+    #[inline]
+    pub fn prepare_scalar<const N: usize>(&self, scalar: Vec<I>) -> Polynomial<I, N>
+    where
+        I: Zero + One,
+        for<'a> &'a I: Mul<Output = I> + Sub<Output = I> + Add<Output = I>,
+    {
+        Polynomial::from_coeffs(scalar)
+    }
+
     /// The standard deviation used in the zero-knowledge proof.
     pub(crate) fn standard_deviation(&self, deg_n: usize) -> usize {
         // sigma = 11 * kappa * b * sqrt(k*deg_n)

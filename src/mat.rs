@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul, Neg, Sub};
 
 use num::{Integer, One, Zero};
 use poly_ring_xnp1::Polynomial;
@@ -115,6 +115,27 @@ impl<T, const N: usize> Mat<T, N> {
             for j in 0..n {
                 polynomials[i][j] =
                     self.polynomials[i][j].clone() + other.polynomials[i][j].clone();
+            }
+        }
+        Mat { polynomials }
+    }
+
+    #[allow(clippy::needless_range_loop)]
+    pub fn sub(&self, other: &Mat<T, N>) -> Mat<T, N>
+    where
+        T: Zero + One + Clone,
+        for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Neg<Output = T>,
+    {
+        let (m, n) = self.dim();
+        let (m2, n2) = other.dim();
+        assert_eq!(m, m2);
+        assert_eq!(n, n2);
+
+        let mut polynomials = vec![vec![Polynomial::<T, N>::zero(); n]; m];
+        for i in 0..m {
+            for j in 0..n {
+                polynomials[i][j] =
+                    self.polynomials[i][j].clone() - other.polynomials[i][j].clone();
             }
         }
         Mat { polynomials }
@@ -238,6 +259,35 @@ mod tests {
             vec![vec![
                 a_0_0.clone() + b_0_0.clone(),
                 a_0_1.clone() + b_0_1.clone()
+            ]]
+        );
+    }
+
+    #[test]
+    fn test_sub() {
+        let a_0_0 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        let a_0_1 = Polynomial::<i32, N>::new(vec![4, 5, 6]);
+
+        // 1x2 matrix
+        let a = Mat {
+            polynomials: vec![vec![a_0_0.clone(), a_0_1.clone()]],
+        };
+
+        let b_0_0 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        let b_0_1 = Polynomial::<i32, N>::new(vec![4, 5, 6]);
+
+        // 1x2 matrix
+        let b = Mat {
+            polynomials: vec![vec![b_0_0.clone(), b_0_1.clone()]],
+        };
+
+        let c = a.sub(&b);
+
+        assert_eq!(
+            c.polynomials,
+            vec![vec![
+                a_0_0.clone() - b_0_0.clone(),
+                a_0_1.clone() - b_0_1.clone()
             ]]
         );
     }

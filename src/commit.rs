@@ -100,7 +100,7 @@ pub struct Commitment<I, const N: usize> {
 }
 
 impl<I, const N: usize> Commitment<I, N> {
-    pub(crate) fn verify(
+    pub fn verify(
         &self,
         params: &Params<I>,
         ck: &CommitmentKey<I, N>,

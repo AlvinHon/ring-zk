@@ -198,8 +198,8 @@ where
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinearProofCommitment<I, const N: usize> {
-    c: Commitment<I, N>,
-    cp: Commitment<I, N>,
+    pub c: Commitment<I, N>,
+    pub cp: Commitment<I, N>,
     g: Polynomial<I, N>,
     t: Vec<Polynomial<I, N>>,  // n x 1 matrix
     tp: Vec<Polynomial<I, N>>, // n x 1 matrix
@@ -222,8 +222,8 @@ pub struct LinearProofVerificationContext<I, const N: usize> {
 }
 
 pub struct LinearProofResponseContext<I, const N: usize> {
-    opening: Opening<I, N>,
-    opening_p: Opening<I, N>,
+    pub opening: Opening<I, N>,
+    pub opening_p: Opening<I, N>,
     y: Mat<I, N>,  // k x 1 matrix
     yp: Mat<I, N>, // k x 1 matrix
 }

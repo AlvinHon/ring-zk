@@ -128,13 +128,13 @@ where
 }
 
 pub struct OpenProofResponseContext<I, const N: usize> {
-    pub(crate) opening: Opening<I, N>,
-    pub(crate) y: Mat<I, N>, // k x 1 matrix
+    pub opening: Opening<I, N>,
+    y: Mat<I, N>, // k x 1 matrix
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenProofCommitment<I, const N: usize> {
-    c: Commitment<I, N>,
+    pub c: Commitment<I, N>,
     t: Vec<Polynomial<I, N>>, // n x 1 matrix
 }
 

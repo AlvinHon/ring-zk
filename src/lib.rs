@@ -1,6 +1,6 @@
 pub(crate) mod challenge_space;
 pub(crate) mod commit;
-pub use commit::CommitmentKey;
+pub use commit::{Commitment, CommitmentKey, Opening};
 pub(crate) mod mat;
 pub mod params;
 pub use params::Params;
@@ -35,11 +35,12 @@ mod tests {
         let x = params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]);
 
         let prover = OpenProofProver::new(ck.clone(), params.clone());
-        let verifier = OpenProofVerifier::new(ck, params);
+        let verifier = OpenProofVerifier::new(ck.clone(), params.clone());
 
         // 3-phase Sigma Protocol:
         // - First create commitment with information for proving the opening.
         let (response_ctx, commitment) = prover.commit_and_prove(rng, x);
+        assert!(commitment.c.verify(&params, &ck, &response_ctx.opening));
         // - Verifier receives commitment and then create a challenge.
         let (verification_ctx, challenge) = verifier.generate_challenge(rng, commitment);
         // - Prover receives the challenge and then create a response.
@@ -58,11 +59,13 @@ mod tests {
         let g = params.prepare_scalar::<N>(vec![5, 6]);
 
         let prover = LinearProofProver::new(ck.clone(), params.clone());
-        let verifier = LinearProofVerifier::new(ck, params);
+        let verifier = LinearProofVerifier::new(ck.clone(), params.clone());
 
         // 3-phase Sigma Protocol:
         // - First create commitment with information for proving the linear relationship of the committed value.
         let (response_ctx, commitment) = prover.commit_and_prove(rng, g, x);
+        assert!(commitment.c.verify(&params, &ck, &response_ctx.opening));
+        assert!(commitment.cp.verify(&params, &ck, &response_ctx.opening_p));
         // - Verifier receives commitment and then create a challenge.
         let (verification_ctx, challenge) = verifier.generate_challenge(rng, commitment);
         // - Prover receives the challenge and then create a response.

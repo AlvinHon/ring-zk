@@ -9,6 +9,7 @@ use rand::{distr::uniform::SampleUniform, Rng};
 
 use crate::{mat::Mat, params::Params, polynomial::random_polynomial_within};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CommitmentKey<I, const N: usize>
 where
     I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
@@ -23,7 +24,7 @@ where
     I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
-    pub fn new(rng: &mut impl Rng, params: &Params<I>) -> Self {
+    pub(crate) fn new(rng: &mut impl Rng, params: &Params<I>) -> Self {
         let Params { q, n, k, l, .. } = params.clone();
 
         // a1 is a polynomial matrix of size n x k
@@ -51,7 +52,7 @@ where
         CommitmentKey { a1, a2 }
     }
 
-    pub fn commit(
+    pub(crate) fn commit(
         &self,
         rng: &mut impl Rng,
         params: &Params<I>,
@@ -99,7 +100,7 @@ pub struct Commitment<I, const N: usize> {
 }
 
 impl<I, const N: usize> Commitment<I, N> {
-    pub fn verify(
+    pub(crate) fn verify(
         &self,
         params: &Params<I>,
         ck: &CommitmentKey<I, N>,

@@ -1,6 +1,6 @@
 pub(crate) mod challenge_space;
-pub mod commit;
-pub use commit::{Commitment, CommitmentKey, Opening};
+pub(crate) mod commit;
+pub use commit::CommitmentKey;
 pub(crate) mod mat;
 pub mod params;
 pub use params::Params;
@@ -8,18 +8,21 @@ pub(crate) mod polynomial;
 pub mod prove;
 pub use prove::{
     linear::{
-        prove_linear, LinearProofChallenge, LinearProofCommitment, LinearProofProver,
-        LinearProofResponse, LinearProofVerifier,
+        LinearProofChallenge, LinearProofCommitment, LinearProofProver, LinearProofResponse,
+        LinearProofResponseContext, LinearProofVerificationContext, LinearProofVerifier,
     },
     open::{
-        prove_open, OpenProofChallenge, OpenProofCommitment, OpenProofProver, OpenProofResponse,
-        OpenProofVerifier,
+        OpenProofChallenge, OpenProofCommitment, OpenProofProver, OpenProofResponse,
+        OpenProofResponseContext, OpenProofVerificationContext, OpenProofVerifier,
     },
 };
 
 #[cfg(test)]
 mod tests {
-    use crate::{prove_linear, prove_open, CommitmentKey, Params};
+    use crate::{
+        CommitmentKey, LinearProofProver, LinearProofVerifier, OpenProofProver, OpenProofVerifier,
+        Params,
+    };
 
     const N: usize = 4;
 
@@ -28,18 +31,21 @@ mod tests {
         let rng = &mut rand::rng();
 
         let params = Params::default();
-        let ck = CommitmentKey::new(rng, &params);
+        let ck = params.generate_commitment_key(rng);
         let x = params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]);
+
+        let prover = OpenProofProver::new(ck.clone(), params.clone());
+        let verifier = OpenProofVerifier::new(ck, params);
 
         // 3-phase Sigma Protocol:
         // - First create commitment with information for proving the opening.
-        let (prover, commitment) = prove_open(rng, x, &ck, &params);
+        let (response_ctx, commitment) = prover.commit_and_prove(rng, x);
         // - Verifier receives commitment and then create a challenge.
-        let (verifier, challenge) = commitment.create_challenge(rng, &params);
+        let (verification_ctx, challenge) = verifier.generate_challenge(rng, commitment);
         // - Prover receives the challenge and then create a response.
-        let response = prover.create_response(challenge);
+        let response = prover.create_response(response_ctx, challenge);
         // - Verifier verifies the response.
-        assert!(verifier.verify(response, &ck, &params));
+        assert!(verifier.verify(response, verification_ctx));
     }
 
     #[test]
@@ -51,14 +57,17 @@ mod tests {
         let x = params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]);
         let g = params.prepare_scalar::<N>(vec![5, 6]);
 
+        let prover = LinearProofProver::new(ck.clone(), params.clone());
+        let verifier = LinearProofVerifier::new(ck, params);
+
         // 3-phase Sigma Protocol:
         // - First create commitment with information for proving the linear relationship of the committed value.
-        let (prover, commitment) = prove_linear(rng, g, x, &ck, &params);
+        let (response_ctx, commitment) = prover.commit_and_prove(rng, g, x);
         // - Verifier receives commitment and then create a challenge.
-        let (verifier, challenge) = commitment.create_challenge(rng, &params);
+        let (verification_ctx, challenge) = verifier.generate_challenge(rng, commitment);
         // - Prover receives the challenge and then create a response.
-        let response = prover.create_response(challenge);
+        let response = prover.create_response(response_ctx, challenge);
         // - Verifier verifies the response.
-        assert!(verifier.verify(response, &ck, &params));
+        assert!(verifier.verify(response, verification_ctx));
     }
 }

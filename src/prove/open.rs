@@ -3,7 +3,7 @@ use std::{
     ops::{Add, Mul, Sub},
 };
 
-use num::{integer::Roots, Integer, NumCast, One, Signed, Zero};
+use num::{integer::Roots, Integer, NumCast, Signed};
 use poly_ring_xnp1::Polynomial;
 use rand::Rng;
 use rand_distr::uniform::SampleUniform;
@@ -16,124 +16,136 @@ use crate::{
     polynomial::random_polynomial_in_normal_distribution,
 };
 
-pub fn prove_open<I, const N: usize>(
-    rng: &mut impl Rng,
-    x: Vec<Polynomial<I, N>>,
-    ck: &CommitmentKey<I, N>,
-    params: &Params<I>,
-) -> (OpenProofProver<I, N>, OpenProofCommitment<I, N>)
+pub struct OpenProofProver<I, const N: usize>
 where
     I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
-    let Params { k, .. } = params.clone();
-    let (c, opening) = ck.commit(rng, params, x);
-
-    // y <- N^k_sigma
-    let y = Mat::<I, N>::new_with(k, 1, || {
-        random_polynomial_in_normal_distribution::<I, N>(
-            rng,
-            I::zero().to_f64().unwrap(),
-            params.standard_deviation(N) as f64,
-        )
-    });
-
-    // t = A1 * y
-    let t = ck.a1.dot(&y).one_d_mat_to_vec();
-
-    (OpenProofProver { opening, y }, OpenProofCommitment { c, t })
+    pub(crate) params: Params<I>,
+    pub(crate) ck: CommitmentKey<I, N>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct OpenProofCommitment<I, const N: usize>
+impl<I, const N: usize> OpenProofProver<I, N>
 where
-    I: Integer + Signed + Sum + Roots + Clone + NumCast,
+    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
-    c: Commitment<I, N>,
-    t: Vec<Polynomial<I, N>>, // n x 1 matrix
+    pub fn new(ck: CommitmentKey<I, N>, params: Params<I>) -> Self {
+        Self { params, ck }
+    }
 }
 
-impl<I, const N: usize> OpenProofCommitment<I, N>
+impl<I, const N: usize> OpenProofProver<I, N>
 where
-    I: Integer + Signed + Sum + Roots + Clone + NumCast,
+    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
-    pub fn create_challenge(
+    pub fn commit_and_prove(
         &self,
         rng: &mut impl Rng,
-        params: &Params<I>,
-    ) -> (OpenProofVerifier<I, N>, OpenProofChallenge<I, N>)
-    where
-        I: Integer + Clone + SampleUniform,
-    {
-        let d = random_polynomial_from_challenge_set(rng, params.kappa);
-        let (c1, _) = self.c.c1_c2(params);
+        x: Vec<Polynomial<I, N>>,
+    ) -> (OpenProofResponseContext<I, N>, OpenProofCommitment<I, N>) {
+        let (c, opening) = self.ck.commit(rng, &self.params, x);
+
+        // y <- N^k_sigma
+        let y = Mat::<I, N>::new_with(self.params.k, 1, || {
+            random_polynomial_in_normal_distribution::<I, N>(
+                rng,
+                I::zero().to_f64().unwrap(),
+                self.params.standard_deviation(N) as f64,
+            )
+        });
+
+        // t = A1 * y
+        let t = self.ck.a1.dot(&y).one_d_mat_to_vec();
+
         (
-            OpenProofVerifier {
-                c1,
-                t: self.t.clone(),
-                d: d.clone(),
-            },
-            OpenProofChallenge { d },
+            OpenProofResponseContext { opening, y },
+            OpenProofCommitment { c, t },
         )
+    }
+
+    pub fn create_response(
+        &self,
+        context: OpenProofResponseContext<I, N>,
+        challenge: OpenProofChallenge<I, N>,
+    ) -> OpenProofResponse<I, N> {
+        // z = y + d * r
+        let z = context
+            .y
+            .add(&context.opening.r.componentwise_mul(&challenge.d));
+        OpenProofResponse { z }
     }
 }
 
 pub struct OpenProofVerifier<I, const N: usize>
 where
-    I: Integer + Signed + Sum + Roots + Clone + NumCast + SampleUniform,
+    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
-    c1: Mat<I, N>,            // n x 1 matrix
-    t: Vec<Polynomial<I, N>>, // n x 1 matrix
-    d: Polynomial<I, N>,
+    params: Params<I>,
+    ck: CommitmentKey<I, N>,
 }
 
 impl<I, const N: usize> OpenProofVerifier<I, N>
 where
-    I: Integer + Signed + Sum + Roots + Clone + NumCast + SampleUniform,
+    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
+    pub fn new(ck: CommitmentKey<I, N>, params: Params<I>) -> Self {
+        OpenProofVerifier { params, ck }
+    }
+    pub fn generate_challenge(
+        &self,
+        rng: &mut impl Rng,
+        commitment: OpenProofCommitment<I, N>,
+    ) -> (OpenProofVerificationContext<I, N>, OpenProofChallenge<I, N>) {
+        let d = random_polynomial_from_challenge_set(rng, self.params.kappa);
+        let (c1, _) = commitment.c.c1_c2(&self.params);
+        (
+            OpenProofVerificationContext {
+                c1,
+                t: commitment.t,
+                d: d.clone(),
+            },
+            OpenProofChallenge { d },
+        )
+    }
+
     pub fn verify(
         &self,
         response: OpenProofResponse<I, N>,
-        ck: &CommitmentKey<I, N>,
-        params: &Params<I>,
+        context: OpenProofVerificationContext<I, N>,
     ) -> bool {
-        if !params.check_verify_constraint(&response.z) {
+        if !self.params.check_verify_constraint(&response.z) {
             return false;
         }
         // A1 * z = t + c1 * d
-        let lhs = ck.a1.dot(&response.z);
-        let rhs = Mat::<I, N>::from_vec(self.t.clone()).add(&self.c1.componentwise_mul(&self.d));
+        let lhs = self.ck.a1.dot(&response.z);
+        let rhs = Mat::<I, N>::from_vec(context.t).add(&context.c1.componentwise_mul(&context.d));
         lhs == rhs
     }
 }
 
-pub struct OpenProofProver<I, const N: usize>
-where
-    I: Zero + One + Clone,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
-{
-    opening: Opening<I, N>,
-    y: Mat<I, N>, // k x 1 matrix
+pub struct OpenProofResponseContext<I, const N: usize> {
+    pub(crate) opening: Opening<I, N>,
+    pub(crate) y: Mat<I, N>, // k x 1 matrix
 }
 
-impl<I, const N: usize> OpenProofProver<I, N>
-where
-    I: Zero + One + Clone,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
-{
-    pub fn create_response(&self, challenge: OpenProofChallenge<I, N>) -> OpenProofResponse<I, N> {
-        // z = y + d * r
-        let z = self.y.add(&self.opening.r.componentwise_mul(&challenge.d));
-        OpenProofResponse { z }
-    }
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OpenProofCommitment<I, const N: usize> {
+    c: Commitment<I, N>,
+    t: Vec<Polynomial<I, N>>, // n x 1 matrix
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenProofChallenge<I, const N: usize> {
+    d: Polynomial<I, N>,
+}
+
+pub struct OpenProofVerificationContext<I, const N: usize> {
+    c1: Mat<I, N>,            // n x 1 matrix
+    t: Vec<Polynomial<I, N>>, // n x 1 matrix
     d: Polynomial<I, N>,
 }
 

@@ -5,32 +5,45 @@ use std::{
 
 use num::{integer::Roots, Integer, NumCast, One, Signed, Zero};
 use poly_ring_xnp1::Polynomial;
+use rand::Rng;
+use rand_distr::uniform::SampleUniform;
 
-use crate::{mat::Mat, polynomial::norm_2};
+use crate::{mat::Mat, polynomial::norm_2, CommitmentKey};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Params<I> {
     /// Prime modulus. q = 2*d + 1 (mod 4d) in Lemma 1. Use d = 2 for this library.
-    pub(crate) q: I,
+    pub q: I,
     /// Norm bound for honest prover's randomness.
-    pub(crate) b: I,
+    pub b: I,
 
     // k > n >= l
     /// Height of the commitment matrix (a1).
-    pub(crate) n: usize,
+    pub n: usize,
     /// Width of the commitment matrices
-    pub(crate) k: usize,
+    pub k: usize,
     /// Dimension of the message space.
-    pub(crate) l: usize,
+    pub l: usize,
 
     /// The maximum norm_1 of any element in Challenge Space C.
-    pub(crate) kappa: usize,
+    pub kappa: usize,
 }
 
 impl<I> Params<I>
 where
     I: Integer + Signed + Sum + Roots + Clone + NumCast,
 {
+    /// Generate a new commitment key. The generic parameter N indicates the maximum length of the integer vector.
+    /// It must be a power of two.
+    #[inline]
+    pub fn generate_commitment_key<const N: usize>(&self, rng: &mut impl Rng) -> CommitmentKey<I, N>
+    where
+        I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
+        for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
+    {
+        CommitmentKey::new(rng, self)
+    }
+
     /// Prepare the value for the commitment. The input is a matrix (of size `l` x 1) of integer vectors.
     /// The generic parameter N indicates the maximum length of the integer vector. It must be a power
     /// of two.

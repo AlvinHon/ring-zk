@@ -99,17 +99,19 @@ where
     }
 }
 
-/// Parameters Set 1. The message length (l) is 1.
-pub fn params_1() -> Params<i64> {
-    let q = 3515337053_i64; // 32 bits
-    assert!(q % 8 == 5, "q must be 2*d  + 1 mod 4d. Use d = 2.");
-    Params {
-        q,
-        b: 1,
-        n: 1,
-        k: 3,
-        l: 1,
-        kappa: 36,
+impl Default for Params<i64> {
+    /// Parameters Set 1. The message length (l) is 1.
+    fn default() -> Self {
+        let q = 3515337053_i64; // 32 bits
+        assert!(q % 8 == 5, "q must be 2*d  + 1 mod 4d. Use d = 2.");
+        Params {
+            q,
+            b: 1,
+            n: 1,
+            k: 3,
+            l: 1,
+            kappa: 36,
+        }
     }
 }
 
@@ -119,7 +121,7 @@ mod tests {
 
     #[test]
     fn test_standard_deviation() {
-        let params = params_1();
+        let params = Params::default();
         let deg_n = 1024;
         let sigma = params.standard_deviation(deg_n);
         assert_eq!(sigma, 21780);

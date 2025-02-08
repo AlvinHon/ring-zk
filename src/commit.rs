@@ -163,7 +163,6 @@ pub struct Opening<I, const N: usize> {
 
 #[cfg(test)]
 mod tests {
-    use crate::params::params_1;
 
     use super::*;
 
@@ -172,7 +171,7 @@ mod tests {
     #[test]
     fn test_commitment() {
         let mut rng = rand::rng();
-        let params = params_1();
+        let params = Params::default();
         let ck = CommitmentKey::new(&mut rng, &params);
 
         let x = vec![Polynomial::<i64, N>::from_coeffs(vec![1, 2, 3, 4])];

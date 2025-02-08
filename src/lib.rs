@@ -3,7 +3,7 @@ pub mod commit;
 pub use commit::{Commitment, CommitmentKey, Opening};
 pub(crate) mod mat;
 pub mod params;
-pub use params::{params_1, Params};
+pub use params::Params;
 pub(crate) mod polynomial;
 pub mod prove;
 pub use prove::{
@@ -19,7 +19,7 @@ pub use prove::{
 
 #[cfg(test)]
 mod tests {
-    use crate::{params_1, prove_linear, prove_open, CommitmentKey};
+    use crate::{prove_linear, prove_open, CommitmentKey, Params};
 
     const N: usize = 4;
 
@@ -27,7 +27,7 @@ mod tests {
     fn test_prove_open() {
         let rng = &mut rand::rng();
 
-        let params = params_1();
+        let params = Params::default();
         let ck = CommitmentKey::new(rng, &params);
         let x = params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]);
 
@@ -46,7 +46,7 @@ mod tests {
     fn test_prove_linear() {
         let rng = &mut rand::rng();
 
-        let params = params_1();
+        let params = Params::default();
         let ck = CommitmentKey::new(rng, &params);
         let x = params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]);
         let g = params.prepare_scalar::<N>(vec![5, 6]);

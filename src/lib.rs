@@ -15,13 +15,17 @@ pub use prove::{
         OpenProofChallenge, OpenProofCommitment, OpenProofProver, OpenProofResponse,
         OpenProofResponseContext, OpenProofVerificationContext, OpenProofVerifier,
     },
+    sum::{
+        SumProofChallenge, SumProofCommitment, SumProofProver, SumProofResponse,
+        SumProofResponseContext, SumProofVerificationContext, SumProofVerifier,
+    },
 };
 
 #[cfg(test)]
 mod tests {
     use crate::{
         CommitmentKey, LinearProofProver, LinearProofVerifier, OpenProofProver, OpenProofVerifier,
-        Params,
+        Params, SumProofProver, SumProofVerifier,
     };
 
     const N: usize = 4;
@@ -65,6 +69,43 @@ mod tests {
         // - First create commitment with information for proving the linear relationship of the committed value.
         let (response_ctx, commitment) = prover.commit_and_prove(rng, g, x);
         assert!(commitment.c.verify(&params, &ck, &response_ctx.opening));
+        assert!(commitment.cp.verify(&params, &ck, &response_ctx.opening_p));
+        // - Verifier receives commitment and then create a challenge.
+        let (verification_ctx, challenge) = verifier.generate_challenge(rng, commitment);
+        // - Prover receives the challenge and then create a response.
+        let response = prover.create_response(response_ctx, challenge);
+        // - Verifier verifies the response.
+        assert!(verifier.verify(response, verification_ctx));
+    }
+
+    #[test]
+    fn test_prove_sum() {
+        let rng = &mut rand::rng();
+
+        let params = Params::default();
+        let ck = CommitmentKey::new(rng, &params);
+        let xs = vec![
+            params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]),
+            params.prepare_value::<N>(vec![vec![5, 6, 7, 8]]),
+        ];
+        let gs = vec![
+            params.prepare_scalar::<N>(vec![5, 6]),
+            params.prepare_scalar::<N>(vec![7, 8]),
+        ];
+
+        let prover = SumProofProver::new(ck.clone(), params.clone());
+        let verifier = SumProofVerifier::new(ck.clone(), params.clone());
+
+        // 3-phase Sigma Protocol:
+        // - First create commitment with information for proving the linear relationship of the committed value.
+        let (response_ctx, commitment) = prover.commit_and_prove(rng, gs, xs);
+        commitment
+            .cs
+            .iter()
+            .zip(response_ctx.openings.iter())
+            .for_each(|(c, o)| {
+                assert!(c.verify(&params, &ck, o));
+            });
         assert!(commitment.cp.verify(&params, &ck, &response_ctx.opening_p));
         // - Verifier receives commitment and then create a challenge.
         let (verification_ctx, challenge) = verifier.generate_challenge(rng, commitment);

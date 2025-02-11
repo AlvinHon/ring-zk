@@ -109,7 +109,7 @@ mod tests {
         let std_dev = 10.0;
         let p = random_polynomial_in_normal_distribution::<i64, N>(&mut rng, mean, std_dev);
         p.iter().for_each(|c| {
-            assert!(-20 <= *c && *c <= 20);
+            assert!(c.abs() <= 3 * std_dev as i64); // 99.7% of the data
         });
     }
 }

@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 pub(crate) mod challenge_space;
 pub(crate) mod commit;
 pub use commit::{Commitment, CommitmentKey, Opening};
@@ -24,8 +26,8 @@ pub use prove::{
 #[cfg(test)]
 mod tests {
     use crate::{
-        CommitmentKey, LinearProofProver, LinearProofVerifier, OpenProofProver, OpenProofVerifier,
-        Params, SumProofProver, SumProofVerifier,
+        LinearProofProver, LinearProofVerifier, OpenProofProver, OpenProofVerifier, Params,
+        SumProofProver, SumProofVerifier,
     };
 
     const N: usize = 4;
@@ -58,7 +60,7 @@ mod tests {
         let rng = &mut rand::rng();
 
         let params = Params::default();
-        let ck = CommitmentKey::new(rng, &params);
+        let ck = params.generate_commitment_key(rng);
         let x = params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]);
         let g = params.prepare_scalar::<N>(vec![5, 6]);
 
@@ -83,7 +85,7 @@ mod tests {
         let rng = &mut rand::rng();
 
         let params = Params::default();
-        let ck = CommitmentKey::new(rng, &params);
+        let ck = params.generate_commitment_key(rng);
         let xs = vec![
             params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]),
             params.prepare_value::<N>(vec![vec![5, 6, 7, 8]]),

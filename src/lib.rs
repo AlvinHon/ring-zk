@@ -45,7 +45,7 @@ mod tests {
 
         // 3-phase Sigma Protocol:
         // - First create commitment with information for proving the opening.
-        let (response_ctx, commitment) = prover.commit_and_prove(rng, x);
+        let (response_ctx, commitment) = prover.commit(rng, x);
         assert!(commitment.c.verify(&params, &ck, &response_ctx.opening));
         // - Verifier receives commitment and then create a challenge.
         let (verification_ctx, challenge) = verifier.generate_challenge(rng, commitment);
@@ -69,7 +69,7 @@ mod tests {
 
         // 3-phase Sigma Protocol:
         // - First create commitment with information for proving the linear relationship of the committed value.
-        let (response_ctx, commitment) = prover.commit_and_prove(rng, g, x);
+        let (response_ctx, commitment) = prover.commit(rng, g, x);
         assert!(commitment.c.verify(&params, &ck, &response_ctx.opening));
         assert!(commitment.cp.verify(&params, &ck, &response_ctx.opening_p));
         // - Verifier receives commitment and then create a challenge.
@@ -100,7 +100,7 @@ mod tests {
 
         // 3-phase Sigma Protocol:
         // - First create commitment with information for proving the linear relationship of the committed value.
-        let (response_ctx, commitment) = prover.commit_and_prove(rng, gs, xs);
+        let (response_ctx, commitment) = prover.commit(rng, gs, xs);
         commitment
             .cs
             .iter()

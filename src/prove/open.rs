@@ -40,7 +40,7 @@ where
     I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
-    pub fn commit_and_prove(
+    pub fn commit(
         &self,
         rng: &mut impl Rng,
         x: Vec<Polynomial<I, N>>,

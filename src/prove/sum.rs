@@ -34,7 +34,7 @@ where
         Self { params, ck }
     }
 
-    pub fn commit_and_prove(
+    pub fn commit(
         &self,
         rng: &mut impl Rng,
         gs: Vec<Polynomial<I, N>>,

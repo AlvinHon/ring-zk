@@ -1,3 +1,13 @@
+//! Implementation of Proof of Opening a Commitment, defined in section 4.4 of the paper.
+//!
+//! This modules contains struct [OpenProofProver] and [OpenProofVerifier] for proving and verifying
+//! opening of a commitment ([OpenProofCommitment]) to a value.
+//! The prover and verifier will exchange messages [OpenProofChallenge] and [OpenProofResponse] to
+//! complete the 3-phase Sigma Protocol.
+//! The opening is encapsulated in [OpenProofResponseContext] which is created and used by prover in the
+//! protocol. The verifier generates the challenge and verifies the response by using the context
+//! [OpenProofVerificationContext].
+
 use std::{
     iter::Sum,
     ops::{Add, Mul, Sub},
@@ -16,13 +26,11 @@ use crate::{
     polynomial::random_polynomial_in_normal_distribution,
 };
 
-pub struct OpenProofProver<I, const N: usize>
-where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
-{
-    pub(crate) params: Params<I>,
-    pub(crate) ck: CommitmentKey<I, N>,
+/// The prover for the proof of linear relation. It is used to prove that the prover knows the
+/// opening of commitment to a value.
+pub struct OpenProofProver<I, const N: usize> {
+    params: Params<I>,
+    ck: CommitmentKey<I, N>,
 }
 
 impl<I, const N: usize> OpenProofProver<I, N>
@@ -33,13 +41,14 @@ where
     pub fn new(ck: CommitmentKey<I, N>, params: Params<I>) -> Self {
         Self { params, ck }
     }
-}
 
-impl<I, const N: usize> OpenProofProver<I, N>
-where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
-{
+    /// Create commitments to the value `x`.
+    /// It returns the response context and the commitment. The response context is used to create
+    /// the response in a later phase of the protocol. Note that the context includes the openings
+    /// of commitments to `x`.
+    ///
+    /// ## Panics
+    /// Panics if the length of `x` is not equal to the length of `l` defined in the `Params` struct.
     pub fn commit(
         &self,
         rng: &mut impl Rng,
@@ -65,6 +74,8 @@ where
         )
     }
 
+    /// Create the response for the challenge received from the verifier. The response is created
+    /// using the context that was created during the commitment phase.
     pub fn create_response(
         &self,
         context: OpenProofResponseContext<I, N>,
@@ -78,11 +89,9 @@ where
     }
 }
 
-pub struct OpenProofVerifier<I, const N: usize>
-where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
-{
+/// The verifier for the proof of opening a commitment. It is used to verify that the prover knows
+/// the opening of commitment to a value.
+pub struct OpenProofVerifier<I, const N: usize> {
     params: Params<I>,
     ck: CommitmentKey<I, N>,
 }
@@ -95,6 +104,11 @@ where
     pub fn new(ck: CommitmentKey<I, N>, params: Params<I>) -> Self {
         OpenProofVerifier { params, ck }
     }
+
+    /// Generate the challenge for the prover, given the commitments that says the prover knows its
+    /// opening to the commitment to a value.
+    /// It returns the verification context and the challenge. The verification context is used to
+    /// verify the response in a later phase of the protocol.
     pub fn generate_challenge(
         &self,
         rng: &mut impl Rng,
@@ -112,6 +126,8 @@ where
         )
     }
 
+    /// Verify the response from the prover. It returns `true` if the response is valid, otherwise `false`.
+    /// The context was created during the challenge phase in the protocol.
     pub fn verify(
         &self,
         response: OpenProofResponse<I, N>,
@@ -127,28 +143,39 @@ where
     }
 }
 
+/// The response created by the prover upon receiving the challenge from the verifier
+/// in the protocol of proof of opening a commitment. It contains the opening of commitment
+/// to value `x`.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenProofResponseContext<I, const N: usize> {
     pub opening: Opening<I, N>,
     y: Mat<I, N>, // k x 1 matrix
 }
 
+/// Contains the commitment to the values `x`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenProofCommitment<I, const N: usize> {
+    /// Commitment to value `x`.
     pub c: Commitment<I, N>,
     t: Vec<Polynomial<I, N>>, // n x 1 matrix
 }
 
+/// Contains the context for the verification phase of the proof of opening a commitment.
+/// It is used to verify the response from the prover.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct OpenProofChallenge<I, const N: usize> {
-    d: Polynomial<I, N>,
-}
-
 pub struct OpenProofVerificationContext<I, const N: usize> {
     c1: Mat<I, N>,            // n x 1 matrix
     t: Vec<Polynomial<I, N>>, // n x 1 matrix
     d: Polynomial<I, N>,
 }
 
+/// The challenge created by the verifier in the protocol of proof of opening a commitment.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OpenProofChallenge<I, const N: usize> {
+    d: Polynomial<I, N>,
+}
+
+/// The response from the prover to the verifier in the protocol of proof of opening a commitment.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OpenProofResponse<I, const N: usize> {
     z: Mat<I, N>, // k x 1 matrix

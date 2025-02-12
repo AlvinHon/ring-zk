@@ -1,3 +1,16 @@
+//! Implementation of Proof of Sum.
+//!
+//! It is **not** defined in the paper, but it is a generalization of the Proof of Linear Relation.
+//!
+//! This modules contains struct [SumProofProver] and [SumProofVerifier] for proving and verifying
+//! opening of commitments ([SumProofCommitment]) to `x'` and a vector of `x_i` such that
+//! `x' = g_1 * x_1 + g_2 * x_2 + ...` for a vector of scalars `g_i`.
+//! The prover and verifier will exchange messages [SumProofChallenge] and [SumProofResponse] to
+//! complete the 3-phase Sigma Protocol.
+//! The opening is encapsulated in [SumProofResponseContext] which is created and used by prover in the
+//! protocol. The verifier generates the challenge and verifies the response by using the context
+//! [SumProofVerificationContext].
+
 use std::{
     iter::Sum,
     ops::{Add, Mul, Neg, Sub},
@@ -16,13 +29,12 @@ use crate::{
     polynomial::random_polynomial_in_normal_distribution,
 };
 
-pub struct SumProofProver<I, const N: usize>
-where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I> + Neg<Output = I>,
-{
-    pub(crate) params: Params<I>,
-    pub(crate) ck: CommitmentKey<I, N>,
+/// The prover for the proof of sum. It is used to prove that the prover knows the
+/// opening of commitments to `x'` and a vector of `x_i` such that `x' = g_1 * x_1 + g_2 * x_2 + ...`,
+/// where `g_i` are scalars.
+pub struct SumProofProver<I, const N: usize> {
+    params: Params<I>,
+    ck: CommitmentKey<I, N>,
 }
 
 impl<I, const N: usize> SumProofProver<I, N>
@@ -34,6 +46,17 @@ where
         Self { params, ck }
     }
 
+    /// Create commitments to `x'` and a vector (`xs`) of `x_i` such that `x' = g_1 * x_1 + g_2 * x_2 + ...`,
+    /// where `g_i` are scalars (`gs`).
+    /// It returns the response context and the commitment. The response context is used to create
+    /// the response in a later phase of the protocol. Note that the context includes the openings
+    /// of commitments to `x'` and the vector of `x_i`.
+    ///
+    /// ## Panics
+    /// Panics if
+    /// - the length of `gs` is not equal to the length of `xs`.
+    /// - `gs` is empty.
+    /// - the length of `x_i` is not equal to the length of `l` defined in the `Params` struct.
     pub fn commit(
         &self,
         rng: &mut impl Rng,
@@ -115,6 +138,8 @@ where
         )
     }
 
+    /// Create the response for the challenge received from the verifier. The response is created
+    /// using the context that was created during the commitment phase.
     pub fn create_response(
         &self,
         context: SumProofResponseContext<I, N>,
@@ -136,11 +161,10 @@ where
     }
 }
 
-pub struct SumProofVerifier<I, const N: usize>
-where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I> + Neg<Output = I>,
-{
+/// The verifier for the proof of sum. It is used to verify that the prover knows the
+/// openings of commitments to `x'` and a vector of `x_i` such that
+/// `x' = g_1 * x_1 + g_2 * x_2 + ...`, where `g_i` are scalars.
+pub struct SumProofVerifier<I, const N: usize> {
     params: Params<I>,
     ck: CommitmentKey<I, N>,
 }
@@ -154,6 +178,11 @@ where
         SumProofVerifier { params, ck }
     }
 
+    /// Generate the challenge for the prover, given the commitments that says the prover knows its
+    /// openings to the commitments to `x'` and a vector of `x_i` such that `x' = g_1 * x_1 + g_2 * x_2 + ...`,
+    /// where `g_i` are scalars.
+    /// It returns the verification context and the challenge. The verification context is used to
+    /// verify the response in a later phase of the protocol.
     pub fn generate_challenge(
         &self,
         rng: &mut impl Rng,
@@ -181,6 +210,8 @@ where
         )
     }
 
+    /// Verify the response from the prover. It returns `true` if the response is valid, otherwise `false`.
+    /// The context was created during the challenge phase in the protocol.
     pub fn verify(
         &self,
         response: SumProofResponse<I, N>,
@@ -247,11 +278,27 @@ where
     }
 }
 
+/// The response created by the prover upon receiving the challenge from the verifier
+/// in the protocol of proof of sum. It contains the openings of commitments
+/// to `x'` and a vector of `x_i` such that `x' = g_1 * x_1 + g_2 * x_2 + ...`,
+/// where `g_i` are scalars.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SumProofResponseContext<I, const N: usize> {
+    /// vector of openings of x_i where x' = g_0 * x_0 + g_1 * x_1 + ..
+    pub openings: Vec<Opening<I, N>>,
+    /// opening of x'
+    pub opening_p: Opening<I, N>,
+    yp: Mat<I, N>,      // k x 1 matrix
+    ys: Vec<Mat<I, N>>, // vector of k x 1 matrices
+}
+
+/// Contains the commitments to the values `x'` and `x_i` such that `x' = g_0 * x_0 + g_1 * x_1 + ..`
+/// where `g_i` are scalars, used in the proof of sum.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SumProofCommitment<I, const N: usize> {
     /// commitment to x'
     pub cp: Commitment<I, N>,
-    /// commitments to x_i where x' = g_0 x_0 + g_1 x_1 + ..
+    /// commitments to x_i where x' = g_0 * x_0 + g_1 * x_1 + ..
     pub cs: Vec<Commitment<I, N>>,
     gs: Vec<Polynomial<I, N>>,      // vector of scalar g_i
     tp: Vec<Polynomial<I, N>>,      // n x 1 matrix
@@ -259,6 +306,9 @@ pub struct SumProofCommitment<I, const N: usize> {
     u: Mat<I, N>,                   // l x 1 matrix
 }
 
+/// Contains the context for the verification phase of the proof of sum.
+/// It is used to verify the response from the prover.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SumProofVerificationContext<I, const N: usize> {
     c1p: Mat<I, N>,                  // n x 1 matrix
     c2p: Mat<I, N>,                  // l x 1 matrix
@@ -270,20 +320,13 @@ pub struct SumProofVerificationContext<I, const N: usize> {
     d: Polynomial<I, N>,
 }
 
-pub struct SumProofResponseContext<I, const N: usize> {
-    /// vector of openings of x_i where x' = g_0 x_0 + g_1 x_1 + ..
-    pub openings: Vec<Opening<I, N>>,
-    /// opening of x'
-    pub opening_p: Opening<I, N>,
-    yp: Mat<I, N>,      // k x 1 matrix
-    ys: Vec<Mat<I, N>>, // vector of k x 1 matrices
-}
-
+/// The challenge created by the verifier in the protocol of proof of sum.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SumProofChallenge<I, const N: usize> {
     d: Polynomial<I, N>,
 }
 
+/// The response from the prover to the verifier in the protocol of proof of sum.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SumProofResponse<I, const N: usize> {
     zp: Mat<I, N>,      // k x 1 matrix

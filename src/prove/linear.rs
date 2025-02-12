@@ -1,3 +1,13 @@
+//! Implementation of Proof of Linear Relation, defined in section 4.4 of the paper.
+//!
+//! This modules contains struct [LinearProofProver] and [LinearProofVerifier] for proving and verifying
+//! opening of commitments ([LinearProofCommitment]) to `x'` and `x` such that `x' = g * x` for scalar `g`.
+//! The prover and verifier will exchange messages [LinearProofChallenge] and [LinearProofResponse] to
+//! complete the 3-phase Sigma Protocol.
+//! The opening is encapsulated in [LinearProofResponseContext] which is created and used by prover in the
+//! protocol. The verifier generates the challenge and verifies the response by using the context
+//! [LinearProofVerificationContext].
+
 use std::{
     iter::Sum,
     ops::{Add, Mul, Neg, Sub},
@@ -16,13 +26,11 @@ use crate::{
     polynomial::random_polynomial_in_normal_distribution,
 };
 
-pub struct LinearProofProver<I, const N: usize>
-where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I> + Neg<Output = I>,
-{
-    pub(crate) params: Params<I>,
-    pub(crate) ck: CommitmentKey<I, N>,
+/// The prover for the proof of linear relation. It is used to prove that the prover knows the
+/// openings of commitments to `x'` and `x` such that `x' = g * x` for scalar `g`.
+pub struct LinearProofProver<I, const N: usize> {
+    params: Params<I>,
+    ck: CommitmentKey<I, N>,
 }
 
 impl<I, const N: usize> LinearProofProver<I, N>
@@ -34,6 +42,13 @@ where
         Self { params, ck }
     }
 
+    /// Create commitments to `x'` and `x` such that `x' = g * x` for scalar `g`.
+    /// It returns the response context and the commitment. The response context is used to create
+    /// the response in a later phase of the protocol. Note that the context includes the openings
+    /// of commitments to `x'` and `x`.
+    ///
+    /// ## Panics
+    /// Panics if the length of `x` is not equal to the length of `l` defined in the `Params` struct.
     pub fn commit(
         &self,
         rng: &mut impl Rng,
@@ -94,6 +109,8 @@ where
         )
     }
 
+    /// Create the response for the challenge received from the verifier. The response is created
+    /// using the context that was created during the commitment phase.
     pub fn create_response(
         &self,
         context: LinearProofResponseContext<I, N>,
@@ -111,11 +128,9 @@ where
     }
 }
 
-pub struct LinearProofVerifier<I, const N: usize>
-where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I> + Neg<Output = I>,
-{
+/// The verifier for the proof of linear relation. It is used to verify that the prover knows the
+/// openings of commitments to `x'` and `x` such that `x' = g * x` for scalar `g`.
+pub struct LinearProofVerifier<I, const N: usize> {
     params: Params<I>,
     ck: CommitmentKey<I, N>,
 }
@@ -129,6 +144,10 @@ where
         LinearProofVerifier { params, ck }
     }
 
+    /// Generate the challenge for the prover, given the commitments that says the prover knows its
+    /// openings to the commitments to values `x'` and `x` such that `x' = g * x` for scalar `g`.
+    /// It returns the verification context and the challenge. The verification context is used to
+    /// verify the response in a later phase of the protocol.
     pub fn generate_challenge(
         &self,
         rng: &mut impl Rng,
@@ -156,6 +175,8 @@ where
         )
     }
 
+    /// Verify the response from the prover. It returns `true` if the response is valid, otherwise `false`.
+    /// The context was created during the challenge phase in the protocol.
     pub fn verify(
         &self,
         response: LinearProofResponse<I, N>,
@@ -196,16 +217,37 @@ where
     }
 }
 
+/// The response created by the prover upon receiving the challenge from the verifier
+/// in the protocol of proof of linear relation. It contains the openings of commitments
+/// to `x'` and `x` such that `x' = g * x` for scalar `g`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LinearProofResponseContext<I, const N: usize> {
+    /// The opening of the commitment to `x` s.t. `x' = g * x`.
+    pub opening: Opening<I, N>,
+    /// The opening of the commitment to `x'` s.t. `x' = g * x`.
+    pub opening_p: Opening<I, N>,
+    y: Mat<I, N>,  // k x 1 matrix
+    yp: Mat<I, N>, // k x 1 matrix
+}
+
+/// Contains the commitments to the values `x'` and `x` such that `x' = g * x`, used in
+/// the proof of linear relation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinearProofCommitment<I, const N: usize> {
+    /// Commitment to value `x` s.t. `x' = g * x`.
     pub c: Commitment<I, N>,
+    /// Commitment to value `x'` s.t. `x' = g * x`.
     pub cp: Commitment<I, N>,
-    g: Polynomial<I, N>,
+    /// The scalar `g` in the relation `x' = g * x`.
+    pub g: Polynomial<I, N>,
     t: Vec<Polynomial<I, N>>,  // n x 1 matrix
     tp: Vec<Polynomial<I, N>>, // n x 1 matrix
     u: Mat<I, N>,              // l x 1 matrix
 }
 
+/// Contains the context for the verification phase of the proof of linear relation.
+/// It is used to verify the response from the prover.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinearProofVerificationContext<I, const N: usize> {
     c1: Mat<I, N>, // n x 1 matrix
     c2: Mat<I, N>, // l x 1 matrix
@@ -221,18 +263,13 @@ pub struct LinearProofVerificationContext<I, const N: usize> {
     d: Polynomial<I, N>,
 }
 
-pub struct LinearProofResponseContext<I, const N: usize> {
-    pub opening: Opening<I, N>,
-    pub opening_p: Opening<I, N>,
-    y: Mat<I, N>,  // k x 1 matrix
-    yp: Mat<I, N>, // k x 1 matrix
-}
-
+/// The challenge created by the verifier in the protocol of proof of linear relation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinearProofChallenge<I, const N: usize> {
     d: Polynomial<I, N>,
 }
 
+/// The response from the prover to the verifier in the protocol of proof of linear relation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinearProofResponse<I, const N: usize> {
     z: Mat<I, N>,  // k x 1 matrix

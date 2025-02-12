@@ -1,3 +1,5 @@
+//! An utilities module for polynomial operations. It provides functions for generating random polynomials and calculating norms.
+
 use std::iter::Sum;
 
 use num::{integer::Roots, Integer, NumCast, Signed};
@@ -27,6 +29,7 @@ where
     Polynomial::new(coeffs)
 }
 
+/// Returns a random polynomial with coefficients in the normal distribution.
 pub(crate) fn random_polynomial_in_normal_distribution<I, const N: usize>(
     rng: &mut impl Rng,
     mean: f64,
@@ -45,7 +48,9 @@ where
     Polynomial::new(coeffs)
 }
 
+/// Returns the 1-norm of the polynomial. It is the sum of the absolute values of the coefficients.
 #[allow(unused)]
+#[inline]
 pub(crate) fn norm_1<I, const N: usize>(p: &Polynomial<I, N>) -> I
 where
     I: Integer + Signed + Sum + Clone,
@@ -53,6 +58,8 @@ where
     p.iter().map(|c| c.abs()).sum()
 }
 
+/// Returns the 2-norm of the polynomial. It is the square root of the sum of the squares of the coefficients.
+#[inline]
 pub(crate) fn norm_2<I, const N: usize>(p: &Polynomial<I, N>) -> I
 where
     I: Integer + Signed + Sum + Clone + Roots,
@@ -60,7 +67,9 @@ where
     p.iter().map(|c| c.clone() * c.clone()).sum::<I>().sqrt()
 }
 
+/// Returns the infinity-norm of the polynomial. It is the maximum absolute value of the coefficients.
 #[allow(unused)]
+#[inline]
 pub(crate) fn norm_infinity<I, const N: usize>(p: &Polynomial<I, N>) -> I
 where
     I: Integer + Signed + Sum + Clone,

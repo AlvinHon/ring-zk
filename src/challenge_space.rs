@@ -1,3 +1,5 @@
+//! Defines the Challenge Space C and its difference C-bar, defined in section 2.2 of the paper.
+
 use std::ops::{Add, Mul, Neg, Sub};
 
 use num::Integer;

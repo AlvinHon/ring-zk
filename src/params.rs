@@ -1,3 +1,5 @@
+//! Defines the public parameters for the protocol.
+
 use std::{
     iter::Sum,
     ops::{Add, Mul, Sub},
@@ -10,37 +12,47 @@ use rand_distr::uniform::SampleUniform;
 
 use crate::{mat::Mat, polynomial::norm_2, CommitmentKey};
 
+/// Public parameters for the protocol.
+///
+/// ## Safety
+/// The struct implements Default for instantiation. If you want to use a custom parameter setting,
+/// please carefully check the constraints for the parameters (see the comment-doc for each parameters).
 #[derive(Clone, Debug)]
 pub struct Params<I> {
-    /// Prime modulus. q = 2*d + 1 (mod 4d) in Lemma 1. Use d = 2 for this library.
-    pub q: I,
-    /// Norm bound for honest prover's randomness.
+    /// Prime modulus. q = 2*d + 1 (mod 4d). Use d = 2 in this library.
+    pub q: I, // The formula is defined in Lemma 1 of the paper.
+    /// Norm bound for honest prover's randomness. It is the `beta` value commonly used
+    /// in lattice-based cryptography, that indicates how "random" the commitment is. It
+    /// is a trade-off between security and efficiency. The value should be a small constant.
     pub b: I,
 
-    // k > n >= l
-    /// Height of the commitment matrix (a1).
+    /// Height of the commitment matrix (a1). It should be a value s.t. k > n >= l.
     pub n: usize,
-    /// Width of the commitment matrices
+    /// Width of the commitment matrices. It should be a value s.t. k > n >= l.
     pub k: usize,
-    /// Dimension of the message space.
+    /// Dimension of the message space. It should be a value s.t. k > n >= l.
     pub l: usize,
 
-    /// The maximum norm_1 of any element in Challenge Space C.
+    /// The maximum norm_1 of any element in Challenge Space C. It indicates the
+    /// "size" of the challenge space. The value should be a small constant.
     pub kappa: usize,
 }
 
 impl<I> Params<I>
 where
-    I: Integer + Signed + Sum + Roots + Clone + NumCast,
+    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast + One + Zero,
+    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     /// Generate a new commitment key. The generic parameter N indicates the maximum length of the integer vector.
     /// It must be a power of two.
+    ///
+    /// ## Panics
+    /// Panics if the constant `N` is not a power of two.
     #[inline]
-    pub fn generate_commitment_key<const N: usize>(&self, rng: &mut impl Rng) -> CommitmentKey<I, N>
-    where
-        I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
-        for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
-    {
+    pub fn generate_commitment_key<const N: usize>(
+        &self,
+        rng: &mut impl Rng,
+    ) -> CommitmentKey<I, N> {
         CommitmentKey::new(rng, self)
     }
 
@@ -55,11 +67,7 @@ where
     /// Panics if the `value.len()` is not equal to the message length (`l`),
     /// and the constant `N` is not a power of two.
     #[inline]
-    pub fn prepare_value<const N: usize>(&self, value: Vec<Vec<I>>) -> Vec<Polynomial<I, N>>
-    where
-        I: Zero + One,
-        for<'a> &'a I: Mul<Output = I> + Sub<Output = I> + Add<Output = I>,
-    {
+    pub fn prepare_value<const N: usize>(&self, value: Vec<Vec<I>>) -> Vec<Polynomial<I, N>> {
         assert!(value.len() == self.l);
         value
             .into_iter()
@@ -77,21 +85,19 @@ where
     /// ## Panics
     /// Panics if the constant `N` is not a power of two.
     #[inline]
-    pub fn prepare_scalar<const N: usize>(&self, scalar: Vec<I>) -> Polynomial<I, N>
-    where
-        I: Zero + One,
-        for<'a> &'a I: Mul<Output = I> + Sub<Output = I> + Add<Output = I>,
-    {
+    pub fn prepare_scalar<const N: usize>(&self, scalar: Vec<I>) -> Polynomial<I, N> {
         Polynomial::from_coeffs(scalar)
     }
 
     /// The standard deviation used in the zero-knowledge proof.
     pub(crate) fn standard_deviation(&self, deg_n: usize) -> usize {
+        // The formula defined in Table 1 of the paper:
         // sigma = 11 * kappa * b * sqrt(k*deg_n)
         self.b.to_usize().unwrap() * (11 * self.kappa) * (self.k * deg_n).sqrt()
     }
 
     /// Check the commitment constraint. norm_2(r_i) must be less or equal to 4*sigma*sqrt(N).
+    /// It is used in the commitment scheme.
     pub(crate) fn check_commit_constraint<const N: usize>(&self, r: &Mat<I, N>) -> bool {
         let sigma = self.standard_deviation(N);
         let constraint = 4 * sigma * N.sqrt();
@@ -102,6 +108,7 @@ where
     }
 
     /// Check the constraint for verification in zk protocol. norm_2(r_i) must be less or equal to 2*sigma*sqrt(N).
+    /// It is used in the verification step in the zk protocol.
     pub(crate) fn check_verify_constraint<const N: usize>(&self, r: &Mat<I, N>) -> bool {
         let sigma = self.standard_deviation(N);
         let constraint = 2 * sigma * N.sqrt();
@@ -113,10 +120,14 @@ where
 }
 
 impl Default for Params<i64> {
-    /// Parameters Set 1. The message length (l) is 1.
+    /// This default parameter setting accepts a message of length 1, and
+    /// the integer range in the message (32 bits) is [-3515337053/2, 3515337053/2].
     fn default() -> Self {
+        // values (except q) are taken from the paper Table 2.
         let q = 3515337053_i64; // 32 bits
-        assert!(q % 8 == 5, "q must be 2*d  + 1 mod 4d. Use d = 2.");
+
+        // assert!(q % 8 == 5, "q must be 2*d  + 1 mod 4d. Use d = 2.");
+
         Params {
             q,
             b: 1,

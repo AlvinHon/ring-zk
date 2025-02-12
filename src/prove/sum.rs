@@ -51,10 +51,10 @@ where
             .reduce(|acc, x| acc.add(&x))
             .unwrap()
             .one_d_mat_to_vec();
-        let (cp, opening_p) = self.ck.commit(rng, &self.params, xp);
-        let (cs, openings) = xs
+        let (opening_p, cp) = self.ck.commit(rng, xp, &self.params);
+        let (openings, cs) = xs
             .into_iter()
-            .map(|x| self.ck.commit(rng, &self.params, x))
+            .map(|x| self.ck.commit(rng, x, &self.params))
             .unzip::<_, _, Vec<_>, Vec<_>>();
 
         // y <- N^k_sigma for for y_i

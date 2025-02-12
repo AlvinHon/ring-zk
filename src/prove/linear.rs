@@ -48,8 +48,8 @@ where
             .cloned()
             .map(|xi| xi.mul(g.clone()))
             .collect::<Vec<_>>(); // g * x
-        let (cp, opening_p) = self.ck.commit(rng, &self.params, gx);
-        let (c, opening) = self.ck.commit(rng, &self.params, x);
+        let (opening_p, cp) = self.ck.commit(rng, gx, &self.params);
+        let (opening, c) = self.ck.commit(rng, x, &self.params);
 
         // y <- N^k_sigma
         let y = Mat::<I, N>::new_with(self.params.k, 1, || {

@@ -45,7 +45,7 @@ where
         rng: &mut impl Rng,
         x: Vec<Polynomial<I, N>>,
     ) -> (OpenProofResponseContext<I, N>, OpenProofCommitment<I, N>) {
-        let (c, opening) = self.ck.commit(rng, &self.params, x);
+        let (opening, c) = self.ck.commit(rng, x, &self.params);
 
         // y <- N^k_sigma
         let y = Mat::<I, N>::new_with(self.params.k, 1, || {

@@ -71,7 +71,7 @@ let (response_ctx, commitment) = prover.commit(rng, g, x);
 
 **Proof of Sum**
 
-The prover wants to prove that they know the openings of commitments `c'` and a vector of commitments to values `x'` and a vector of values s.t. `x' = g_0 * x_1 + g_2 * x_2 + ...` where `g_i` represents a scalar in a vector of integers modulo `q`.
+The prover wants to prove that they know the openings of commitments `c'` and a vector of commitments to values `x'` and a vector of values s.t. `x' = g_0 * x_0 + g_1 * x_1 + ...` where `g_i` represents a scalar in a vector of integers modulo `q`.
 
 Similar to the proof of linear relation, we use the struct `SumProofProver` and `SumProofVerifier`.
 

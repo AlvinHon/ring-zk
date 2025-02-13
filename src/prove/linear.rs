@@ -7,6 +7,35 @@
 //! The opening is encapsulated in [LinearProofResponseContext] which is created and used by prover in the
 //! protocol. The verifier generates the challenge and verifies the response by using the context
 //! [LinearProofVerificationContext].
+//!
+//!
+//! ## Example
+//!
+//! ```rust
+//! use ring_zk::{Params, LinearProofProver, LinearProofVerifier};
+//!
+//! const N: usize = 4;
+//!
+//! let rng = &mut rand::rng();
+//!
+//! let params = Params::default();
+//! let ck = params.generate_commitment_key(rng);
+//! let x = params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]);
+//! let g = params.prepare_scalar::<N>(vec![5, 6]);
+//!
+//! let prover = LinearProofProver::new(ck.clone(), params.clone());
+//! let verifier = LinearProofVerifier::new(ck.clone(), params.clone());
+//!
+//! // 3-phase Sigma Protocol:
+//! // - First create commitment with information for proving the linear relationship of the committed value.
+//! let (response_ctx, commitment) = prover.commit(rng, g, x);
+//! // - Verifier receives commitment and then create a challenge.
+//! let (verification_ctx, challenge) = verifier.generate_challenge(rng, commitment);
+//! // - Prover receives the challenge and then create a response.
+//! let response = prover.create_response(response_ctx, challenge);
+//! // - Verifier verifies the response.
+//! assert!(verifier.verify(response, verification_ctx));
+//! ```
 
 use std::{
     iter::Sum,

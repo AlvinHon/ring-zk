@@ -90,7 +90,7 @@ let prover = SumProofProver::new(ck.clone(), params.clone());
 let verifier = SumProofVerifier::new(ck.clone(), params.clone());
 
 // 3-phase Sigma Protocol:
-// - First create commitment with information for proving the linear relationship of the committed value.
+// - First create commitment with information for proving the summation relationship of the committed values.
 let (response_ctx, commitment) = prover.commit(rng, gs, xs);
 // ... the same interaction ...
 ```

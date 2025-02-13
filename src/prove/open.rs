@@ -7,6 +7,33 @@
 //! The opening is encapsulated in [OpenProofResponseContext] which is created and used by prover in the
 //! protocol. The verifier generates the challenge and verifies the response by using the context
 //! [OpenProofVerificationContext].
+//!
+//!
+//! ## Example
+//!
+//! ```rust
+//! use ring_zk::{Params, OpenProofProver, OpenProofVerifier};
+//!
+//! const N: usize = 4;
+//!
+//! let rng = &mut rand::rng();
+//!
+//! let params = Params::default();
+//! let ck = params.generate_commitment_key(rng);
+//! let x = params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]);
+//!
+//! let prover = OpenProofProver::new(ck.clone(), params.clone());
+//! let verifier = OpenProofVerifier::new(ck.clone(), params.clone());
+//! // 3-phase Sigma Protocol:
+//! // - First create commitment with information for proving the opening.
+//! let (response_ctx, commitment) = prover.commit(rng, x);
+//! // - Verifier receives commitment and then create a challenge.
+//! let (verification_ctx, challenge) = verifier.generate_challenge(rng, commitment);
+//! // - Prover receives the challenge and then create a response.
+//! let response = prover.create_response(response_ctx, challenge);
+//! // - Verifier verifies the response.
+//! assert!(verifier.verify(response, verification_ctx));
+//! ```
 
 use std::{
     iter::Sum,

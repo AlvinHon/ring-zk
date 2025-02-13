@@ -6,7 +6,7 @@ edition = "2021"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/AlvinHon/ring-zk"
-description = ""
+description = "Efficient Zero-Knowledge Proofs for Commitments from RLWE"
 
 
 [lib]

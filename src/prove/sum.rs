@@ -10,6 +10,44 @@
 //! The opening is encapsulated in [SumProofResponseContext] which is created and used by prover in the
 //! protocol. The verifier generates the challenge and verifies the response by using the context
 //! [SumProofVerificationContext].
+//!
+//!
+//! ## Example
+//!
+//!
+//! ## Example
+//!
+//! ```rust
+//! use ring_zk::{Params, SumProofProver, SumProofVerifier};
+//!
+//! const N: usize = 4;
+//!
+//! let rng = &mut rand::rng();
+//!
+//! let params = Params::default();
+//! let ck = params.generate_commitment_key(rng);
+//! let xs = vec![
+//!     params.prepare_value::<N>(vec![vec![1, 2, 3, 4]]),
+//!     params.prepare_value::<N>(vec![vec![5, 6, 7, 8]]),
+//! ];
+//! let gs = vec![
+//!     params.prepare_scalar::<N>(vec![5, 6]),
+//!     params.prepare_scalar::<N>(vec![7, 8]),
+//! ];
+//!
+//! let prover = SumProofProver::new(ck.clone(), params.clone());
+//! let verifier = SumProofVerifier::new(ck.clone(), params.clone());
+//!
+//! // 3-phase Sigma Protocol:
+//! // - First create commitment with information for proving the summation relationship of the committed value.
+//! let (response_ctx, commitment) = prover.commit(rng, gs, xs);
+//! // - Verifier receives commitment and then create a challenge.
+//! let (verification_ctx, challenge) = verifier.generate_challenge(rng, commitment);
+//! // - Prover receives the challenge and then create a response.
+//! let response = prover.create_response(response_ctx, challenge);
+//! // - Verifier verifies the response.
+//! assert!(verifier.verify(response, verification_ctx));
+//! ```
 
 use std::{
     iter::Sum,

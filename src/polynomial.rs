@@ -95,19 +95,19 @@ mod tests {
 
     #[test]
     fn test_norm_1() {
-        let p = Polynomial::<_, N>::new(vec![1, -2, 3, -4]);
+        let p = Polynomial::<i32, N>::new(vec![1, -2, 3, -4]);
         assert_eq!(norm_1(&p), 10);
     }
 
     #[test]
     fn test_norm_2() {
-        let p = Polynomial::<_, N>::new(vec![1, -2, 3, -4]);
+        let p = Polynomial::<i32, N>::new(vec![1, -2, 3, -4]);
         assert_eq!(norm_2(&p), 5);
     }
 
     #[test]
     fn test_norm_infinity() {
-        let p = Polynomial::<_, N>::new(vec![1, -2, 3, -4]);
+        let p = Polynomial::<i32, N>::new(vec![1, -2, 3, -4]);
         assert_eq!(norm_infinity(&p), 4);
     }
 

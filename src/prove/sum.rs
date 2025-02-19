@@ -49,12 +49,9 @@
 //! assert!(verifier.verify(response, verification_ctx));
 //! ```
 
-use std::{
-    iter::Sum,
-    ops::{Add, Mul, Neg, Sub},
-};
+use std::ops::{Add, Mul, Neg, Sub};
 
-use num::{integer::Roots, Integer, NumCast, Signed};
+use num::{FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::Rng;
 use rand_distr::uniform::SampleUniform;
@@ -77,8 +74,8 @@ pub struct SumProofProver<I, const N: usize> {
 
 impl<I, const N: usize> SumProofProver<I, N>
 where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I> + Neg<Output = I>,
+    I: Clone + PartialOrd + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
+    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Neg<Output = I> + Sub<Output = I>,
 {
     pub fn new(ck: CommitmentKey<I, N>, params: Params<I>) -> Self {
         Self { params, ck }
@@ -209,8 +206,8 @@ pub struct SumProofVerifier<I, const N: usize> {
 
 impl<I, const N: usize> SumProofVerifier<I, N>
 where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast,
-    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I> + Neg<Output = I>,
+    I: Clone + PartialOrd + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
+    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Neg<Output = I> + Sub<Output = I>,
 {
     pub fn new(ck: CommitmentKey<I, N>, params: Params<I>) -> Self {
         SumProofVerifier { params, ck }

@@ -1,11 +1,8 @@
 //! Defines the public parameters for the protocol.
 
-use std::{
-    iter::Sum,
-    ops::{Add, Mul, Sub},
-};
+use std::ops::{Add, Mul, Sub};
 
-use num::{integer::Roots, Integer, NumCast, One, Signed, Zero};
+use num::{integer::Roots, FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::Rng;
 use rand_distr::uniform::SampleUniform;
@@ -40,7 +37,7 @@ pub struct Params<I> {
 
 impl<I> Params<I>
 where
-    I: Integer + Signed + Sum + Roots + Clone + SampleUniform + NumCast + One + Zero,
+    I: Clone + PartialOrd + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     /// Generate a new commitment key. The generic parameter N indicates the maximum length of the integer vector.
@@ -100,22 +97,20 @@ where
     /// It is used in the commitment scheme.
     pub(crate) fn check_commit_constraint<const N: usize>(&self, r: &Mat<I, N>) -> bool {
         let sigma = self.standard_deviation(N);
-        let constraint = 4 * sigma * N.sqrt();
-        r.polynomials.iter().all(|r_i| {
-            r_i.iter()
-                .all(|r_ij| norm_2(r_ij).to_usize().unwrap() <= constraint)
-        })
+        let constraint = (4 * sigma * N.sqrt()) as u128;
+        r.polynomials
+            .iter()
+            .all(|r_i| r_i.iter().all(|r_ij| norm_2(r_ij) <= constraint))
     }
 
     /// Check the constraint for verification in zk protocol. norm_2(r_i) must be less or equal to 2*sigma*sqrt(N).
     /// It is used in the verification step in the zk protocol.
     pub(crate) fn check_verify_constraint<const N: usize>(&self, r: &Mat<I, N>) -> bool {
         let sigma = self.standard_deviation(N);
-        let constraint = 2 * sigma * N.sqrt();
-        r.polynomials.iter().all(|r_i| {
-            r_i.iter()
-                .all(|r_ij| norm_2(r_ij).to_usize().unwrap() <= constraint)
-        })
+        let constraint = (2 * sigma * N.sqrt()) as u128;
+        r.polynomials
+            .iter()
+            .all(|r_i| r_i.iter().all(|r_ij| norm_2(r_ij) <= constraint))
     }
 }
 

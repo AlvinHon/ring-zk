@@ -2,7 +2,7 @@
 
 use std::ops::{Add, Mul, Neg, Sub};
 
-use num::Integer;
+use num::{One, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::{distr::uniform::SampleUniform, seq::SliceRandom, Rng};
 
@@ -14,7 +14,8 @@ pub(crate) fn random_polynomial_from_challenge_set<I, const N: usize>(
     kappa: usize,
 ) -> Polynomial<I, N>
 where
-    I: Integer + Clone + SampleUniform,
+    I: Clone + One + Zero + SampleUniform,
+    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     let zero = I::zero();
     let bound = I::one(); // since norm_infinity(c) = 1, the coefficients are in the range [-1, 1]
@@ -24,7 +25,7 @@ where
         *c = if rng.random_bool(0.5) {
             bound.clone()
         } else {
-            zero.clone() - bound.clone()
+            &zero - &bound
         };
     });
     coeffs.shuffle(rng);
@@ -40,8 +41,8 @@ pub(crate) fn random_polynomial_from_challenge_set_difference<I, const N: usize>
     kappa: usize,
 ) -> Polynomial<I, N>
 where
-    I: Integer + Clone + SampleUniform,
-    for<'a> &'a I: Neg<Output = I> + Mul<Output = I> + Sub<Output = I> + Add<Output = I>,
+    I: Clone + One + Zero + SampleUniform + PartialEq,
+    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Neg<Output = I> + Sub<Output = I>,
 {
     let c1 = random_polynomial_from_challenge_set(rng, kappa);
     loop {
@@ -65,8 +66,8 @@ mod tests {
         let mut rng = rand::rng();
         let kappa = 60;
         let c = random_polynomial_from_challenge_set::<i32, N>(&mut rng, kappa);
-        assert_eq!(norm_1(&c), kappa as i32);
-        assert_eq!(norm_infinity(&c), 1i32);
+        assert_eq!(norm_1(&c), kappa as u128);
+        assert_eq!(norm_infinity(&c), 1u128);
     }
 
     #[test]

@@ -1,8 +1,8 @@
 //! An utilities module for polynomial operations. It provides functions for generating random polynomials and calculating norms.
 
-use std::iter::Sum;
+use std::ops::{Add, Mul, Sub};
 
-use num::{integer::Roots, Integer, NumCast, Signed};
+use num::{integer::Roots, FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::{distr::uniform::SampleUniform, Rng};
 use rand_distr::{Distribution, Normal};
@@ -16,14 +16,12 @@ pub(crate) fn random_polynomial_within<I, const N: usize>(
     bound: I,
 ) -> Polynomial<I, N>
 where
-    I: Integer + Clone + SampleUniform,
+    I: Clone + PartialOrd + One + Zero + SampleUniform,
+    for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
-    let lower = I::zero() - bound.clone();
+    let lower = &I::zero() - &bound;
 
-    let mut upper = bound;
-    upper.inc(); // inclusive bound
-
-    let range = lower.clone()..upper.clone();
+    let range = lower.clone()..=bound;
     let coeffs = (0..N).map(|_| rng.random_range(range.clone())).collect();
 
     Polynomial::new(coeffs)
@@ -36,13 +34,13 @@ pub(crate) fn random_polynomial_in_normal_distribution<I, const N: usize>(
     std_dev: f64,
 ) -> Polynomial<I, N>
 where
-    I: Integer + Clone + NumCast,
+    I: Clone + One + Zero + FromPrimitive,
 {
     let normal = Normal::new(mean, std_dev).unwrap();
     let coeffs = normal
         .sample_iter(rng)
         .take(N)
-        .map(|x| NumCast::from(x).unwrap())
+        .map(|x| I::from_f64(x).unwrap())
         .collect();
 
     Polynomial::new(coeffs)
@@ -51,30 +49,41 @@ where
 /// Returns the 1-norm of the polynomial. It is the sum of the absolute values of the coefficients.
 #[allow(unused)]
 #[inline]
-pub(crate) fn norm_1<I, const N: usize>(p: &Polynomial<I, N>) -> I
+pub(crate) fn norm_1<I, const N: usize>(p: &Polynomial<I, N>) -> u128
 where
-    I: Integer + Signed + Sum + Clone,
+    I: Clone + ToPrimitive,
 {
-    p.iter().map(|c| c.abs()).sum()
+    p.iter()
+        .map(|c| c.to_i128().unwrap().unsigned_abs())
+        .reduce(|a, b| a + b)
+        .unwrap()
 }
 
 /// Returns the 2-norm of the polynomial. It is the square root of the sum of the squares of the coefficients.
 #[inline]
-pub(crate) fn norm_2<I, const N: usize>(p: &Polynomial<I, N>) -> I
+pub(crate) fn norm_2<I, const N: usize>(p: &Polynomial<I, N>) -> u128
 where
-    I: Integer + Signed + Sum + Clone + Roots,
+    I: Clone + ToPrimitive,
+    for<'a> &'a I: Mul<Output = I>,
 {
-    p.iter().map(|c| c.clone() * c.clone()).sum::<I>().sqrt()
+    p.iter()
+        .map(|c| (c * c).to_u128().unwrap())
+        .reduce(|a, b| a + b)
+        .unwrap()
+        .sqrt()
 }
 
 /// Returns the infinity-norm of the polynomial. It is the maximum absolute value of the coefficients.
 #[allow(unused)]
 #[inline]
-pub(crate) fn norm_infinity<I, const N: usize>(p: &Polynomial<I, N>) -> I
+pub(crate) fn norm_infinity<I, const N: usize>(p: &Polynomial<I, N>) -> u128
 where
-    I: Integer + Signed + Sum + Clone,
+    I: Clone + ToPrimitive,
 {
-    p.iter().map(|c| c.abs()).max().unwrap()
+    p.iter()
+        .map(|c| c.to_i128().unwrap().unsigned_abs())
+        .max()
+        .unwrap()
 }
 
 #[cfg(test)]

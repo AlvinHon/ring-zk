@@ -20,7 +20,7 @@
 //! ```rust
 //! use ring_zk::{Params, SumProofProver, SumProofVerifier};
 //!
-//! const N: usize = 4;
+//! const N: usize = 512;
 //!
 //! let rng = &mut rand::rng();
 //!

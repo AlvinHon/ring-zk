@@ -25,7 +25,7 @@ The prover wants to prove that they know the opening of a commitment to a value 
 ```rust
 use ring_zk::{Params, OpenProofProver, OpenProofVerifier};
 
-const N: usize = 4; // maximum size of message. Must be power of two.
+const N: usize = 512; // maximum size of message. Must be power of two.
 
 let rng = &mut rand::rng();
 

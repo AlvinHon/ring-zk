@@ -62,7 +62,7 @@ where
     /// ```rust
     /// use ring_zk::Params;
     ///
-    /// const N: usize = 4; // Must be a power of two
+    /// const N: usize = 512; // Must be a power of two
     ///
     /// let rng = &mut rand::rng();
     /// let params = Params::default();
@@ -145,7 +145,7 @@ where
     /// ```rust
     /// use ring_zk::Params;
     ///
-    /// const N: usize = 4; // Must be a power of two
+    /// const N: usize = 512; // Must be a power of two
     ///
     /// let rng = &mut rand::rng();
     /// let params = Params::default();

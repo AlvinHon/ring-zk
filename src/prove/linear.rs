@@ -14,7 +14,7 @@
 //! ```rust
 //! use ring_zk::{Params, LinearProofProver, LinearProofVerifier};
 //!
-//! const N: usize = 4;
+//! const N: usize = 512;
 //!
 //! let rng = &mut rand::rng();
 //!

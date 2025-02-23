@@ -55,9 +55,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::polynomial::{norm_1, norm_infinity};
-
     use super::*;
+    use crate::polynomial::{norm_1, norm_infinity};
+    use num::ToPrimitive;
 
     const N: usize = 256;
 
@@ -66,8 +66,8 @@ mod tests {
         let mut rng = rand::rng();
         let kappa = 60;
         let c = random_polynomial_from_challenge_set::<i32, N>(&mut rng, kappa);
-        assert_eq!(norm_1(&c), kappa as u128);
-        assert_eq!(norm_infinity(&c), 1u128);
+        assert_eq!(norm_1(&c).to_usize().unwrap(), kappa);
+        assert_eq!(norm_infinity(&c).to_usize().unwrap(), 1);
     }
 
     #[test]

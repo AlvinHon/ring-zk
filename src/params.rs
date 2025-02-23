@@ -2,8 +2,8 @@
 
 use std::ops::{Add, Mul, Sub};
 
-use num::{integer::Roots, FromPrimitive, One, ToPrimitive, Zero};
-use poly_ring_xnp1::Polynomial;
+use num::{integer::Roots, BigUint, FromPrimitive, One, ToPrimitive, Zero};
+use poly_ring_xnp1::{zq::ZqI64, Polynomial};
 use rand::Rng;
 use rand_distr::uniform::SampleUniform;
 
@@ -16,7 +16,7 @@ use crate::{mat::Mat, polynomial::norm_2, CommitmentKey};
 /// please carefully check the constraints for the parameters (see the comment-doc for each parameters).
 #[derive(Clone, Debug)]
 pub struct Params<I> {
-    /// Prime modulus. q = 2*d + 1 (mod 4d). Use d = 2 in this library.
+    /// Prime modulus q' divided by 2, where q' = 2*d + 1 (mod 4d). Use d = 2 in this library.
     pub q: I, // The formula is defined in Lemma 1 of the paper.
     /// Norm bound for honest prover's randomness. It is the `beta` value commonly used
     /// in lattice-based cryptography, that indicates how "random" the commitment is. It
@@ -64,10 +64,14 @@ where
     /// Panics if the `value.len()` is not equal to the message length (`l`),
     /// and the constant `N` is not a power of two.
     #[inline]
-    pub fn prepare_value<const N: usize>(&self, value: Vec<Vec<I>>) -> Vec<Polynomial<I, N>> {
+    pub fn prepare_value<const N: usize>(
+        &self,
+        value: Vec<Vec<impl Into<I>>>,
+    ) -> Vec<Polynomial<I, N>> {
         assert!(value.len() == self.l);
         value
             .into_iter()
+            .map(|v| v.into_iter().map(Into::into).collect())
             .map(Polynomial::<I, N>::from_coeffs)
             .collect()
     }
@@ -82,8 +86,8 @@ where
     /// ## Panics
     /// Panics if the constant `N` is not a power of two.
     #[inline]
-    pub fn prepare_scalar<const N: usize>(&self, scalar: Vec<I>) -> Polynomial<I, N> {
-        Polynomial::from_coeffs(scalar)
+    pub fn prepare_scalar<const N: usize>(&self, scalar: Vec<impl Into<I>>) -> Polynomial<I, N> {
+        Polynomial::from_coeffs(scalar.into_iter().map(Into::into).collect::<Vec<I>>())
     }
 
     /// The standard deviation used in the zero-knowledge proof.
@@ -97,7 +101,7 @@ where
     /// It is used in the commitment scheme.
     pub(crate) fn check_commit_constraint<const N: usize>(&self, r: &Mat<I, N>) -> bool {
         let sigma = self.standard_deviation(N);
-        let constraint = (4 * sigma * N.sqrt()) as u128;
+        let constraint = BigUint::from(4 * sigma * N.sqrt());
         r.polynomials
             .iter()
             .all(|r_i| r_i.iter().all(|r_ij| norm_2(r_ij) <= constraint))
@@ -107,25 +111,24 @@ where
     /// It is used in the verification step in the zk protocol.
     pub(crate) fn check_verify_constraint<const N: usize>(&self, r: &Mat<I, N>) -> bool {
         let sigma = self.standard_deviation(N);
-        let constraint = (2 * sigma * N.sqrt()) as u128;
+        let constraint = BigUint::from(2 * sigma * N.sqrt());
         r.polynomials
             .iter()
             .all(|r_i| r_i.iter().all(|r_ij| norm_2(r_ij) <= constraint))
     }
 }
 
-impl Default for Params<i64> {
+impl Default for Params<ZqI64<3515337053_i64>> {
     /// This default parameter setting accepts a message of length 1, and
     /// the integer range in the message (32 bits) is [-3515337053/2, 3515337053/2].
     fn default() -> Self {
-        // values (except q) are taken from the paper Table 2.
-        let q = 3515337053_i64; // 32 bits
-
-        // assert!(q % 8 == 5, "q must be 2*d  + 1 mod 4d. Use d = 2.");
+        // values (except q) are taken from the paper Table 2 (approximately 32 bits).
+        let q = ZqI64::from(3515337053_i64 / 2); // divide by 2 for shifting the range to [-q/2, q/2]
+        let b = ZqI64::one();
 
         Params {
             q,
-            b: 1,
+            b,
             n: 1,
             k: 3,
             l: 1,
@@ -144,5 +147,22 @@ mod tests {
         let deg_n = 1024;
         let sigma = params.standard_deviation(deg_n);
         assert_eq!(sigma, 21780);
+    }
+
+    #[test]
+    fn test_prepare_scalar() {
+        let params = Params::default();
+        let scalar = vec![1, 2, 3, 4];
+        let p = params.prepare_scalar::<4>(scalar);
+        assert_eq!(p.deg(), 3);
+    }
+
+    #[test]
+    fn test_prepare_value() {
+        let params = Params::default();
+        let value = vec![vec![1, 2, 3, 4]];
+        let p = params.prepare_value::<4>(value);
+        assert_eq!(p.len(), 1);
+        assert_eq!(p[0].deg(), 3);
     }
 }

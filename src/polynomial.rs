@@ -2,7 +2,7 @@
 
 use std::ops::{Add, Mul, Sub};
 
-use num::{integer::Roots, FromPrimitive, One, ToPrimitive, Zero};
+use num::{BigInt, BigUint, FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::{distr::uniform::SampleUniform, Rng};
 use rand_distr::{Distribution, Normal};
@@ -49,39 +49,42 @@ where
 /// Returns the 1-norm of the polynomial. It is the sum of the absolute values of the coefficients.
 #[allow(unused)]
 #[inline]
-pub(crate) fn norm_1<I, const N: usize>(p: &Polynomial<I, N>) -> u128
+pub(crate) fn norm_1<I, const N: usize>(p: &Polynomial<I, N>) -> BigUint
 where
     I: Clone + ToPrimitive,
 {
     p.iter()
         .map(|c| c.to_i128().unwrap().unsigned_abs())
-        .reduce(|a, b| a + b)
-        .unwrap_or(0)
+        .fold(BigUint::from(0u32), |a, b| a + b)
 }
 
 /// Returns the 2-norm of the polynomial. It is the square root of the sum of the squares of the coefficients.
 #[inline]
-pub(crate) fn norm_2<I, const N: usize>(p: &Polynomial<I, N>) -> u128
+pub(crate) fn norm_2<I, const N: usize>(p: &Polynomial<I, N>) -> BigUint
 where
     I: Clone + ToPrimitive,
     for<'a> &'a I: Mul<Output = I>,
 {
     p.iter()
-        .map(|c| (c * c).to_u128().unwrap())
-        .reduce(|a, b| a + b)
-        .unwrap_or(0)
+        .map(|c| {
+            (BigInt::from(c.to_i128().unwrap()).pow(2))
+                .to_biguint()
+                .unwrap()
+        })
+        .fold(BigUint::from(0u32), |a, b| a + b)
         .sqrt()
 }
 
 /// Returns the infinity-norm of the polynomial. It is the maximum absolute value of the coefficients.
 #[allow(unused)]
 #[inline]
-pub(crate) fn norm_infinity<I, const N: usize>(p: &Polynomial<I, N>) -> u128
+pub(crate) fn norm_infinity<I, const N: usize>(p: &Polynomial<I, N>) -> BigUint
 where
     I: Clone + ToPrimitive,
 {
     p.iter()
         .map(|c| c.to_i128().unwrap().unsigned_abs())
+        .map(BigUint::from)
         .max()
         .unwrap()
 }
@@ -105,19 +108,19 @@ mod tests {
     #[test]
     fn test_norm_1() {
         let p = Polynomial::<i32, N>::new(vec![1, -2, 3, -4]);
-        assert_eq!(norm_1(&p), 10);
+        assert_eq!(norm_1(&p).to_u64().unwrap(), 10);
     }
 
     #[test]
     fn test_norm_2() {
         let p = Polynomial::<i32, N>::new(vec![1, -2, 3, -4]);
-        assert_eq!(norm_2(&p), 5);
+        assert_eq!(norm_2(&p).to_u64().unwrap(), 5);
     }
 
     #[test]
     fn test_norm_infinity() {
         let p = Polynomial::<i32, N>::new(vec![1, -2, 3, -4]);
-        assert_eq!(norm_infinity(&p), 4);
+        assert_eq!(norm_infinity(&p).to_u64().unwrap(), 4);
     }
 
     #[test]

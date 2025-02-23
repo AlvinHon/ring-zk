@@ -56,7 +56,7 @@ where
     p.iter()
         .map(|c| c.to_i128().unwrap().unsigned_abs())
         .reduce(|a, b| a + b)
-        .unwrap()
+        .unwrap_or(0)
 }
 
 /// Returns the 2-norm of the polynomial. It is the square root of the sum of the squares of the coefficients.
@@ -69,7 +69,7 @@ where
     p.iter()
         .map(|c| (c * c).to_u128().unwrap())
         .reduce(|a, b| a + b)
-        .unwrap()
+        .unwrap_or(0)
         .sqrt()
 }
 

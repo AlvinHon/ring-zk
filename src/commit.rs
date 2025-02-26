@@ -22,7 +22,7 @@ pub struct CommitmentKey<I, const N: usize> {
 
 impl<I, const N: usize> CommitmentKey<I, N>
 where
-    I: Clone + PartialOrd + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
+    I: Clone + PartialOrd + Ord + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     /// Generate a random new commitment key given the parameters.
@@ -135,7 +135,7 @@ pub struct Commitment<I, const N: usize> {
 
 impl<I, const N: usize> Commitment<I, N>
 where
-    I: Clone + PartialOrd + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
+    I: Clone + PartialOrd + Ord + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     /// Verify the validity of opening r.s.t the commitment.

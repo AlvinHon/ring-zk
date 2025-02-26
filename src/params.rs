@@ -37,7 +37,7 @@ pub struct Params<I> {
 
 impl<I> Params<I>
 where
-    I: Clone + PartialOrd + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
+    I: Clone + PartialOrd + Ord + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     /// Generate a new commitment key. The generic parameter N indicates the maximum length of the integer vector.

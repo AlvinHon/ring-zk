@@ -3,7 +3,7 @@
 use std::ops::{Add, Mul, Sub};
 
 use num::{BigInt, BigUint, FromPrimitive, One, ToPrimitive, Zero};
-use poly_ring_xnp1::Polynomial;
+use poly_ring_xnp1::{rand::CoeffsRangeInclusive, Polynomial};
 use rand::{distr::uniform::SampleUniform, Rng};
 use rand_distr::{Distribution, Normal};
 
@@ -16,15 +16,12 @@ pub(crate) fn random_polynomial_within<I, const N: usize>(
     bound: I,
 ) -> Polynomial<I, N>
 where
-    I: Clone + PartialOrd + One + Zero + SampleUniform,
+    I: Clone + PartialOrd + Ord + One + Zero + SampleUniform,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     let lower = &I::zero() - &bound;
-
-    let range = lower.clone()..=bound;
-    let coeffs = (0..N).map(|_| rng.random_range(range.clone())).collect();
-
-    Polynomial::new(coeffs)
+    let range = CoeffsRangeInclusive::from(lower.clone()..=bound);
+    rng.random_range(range)
 }
 
 /// Returns a random polynomial with coefficients in the normal distribution.

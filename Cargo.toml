@@ -15,6 +15,6 @@ path = "src/lib.rs"
 
 [dependencies]
 num = "0.4"
-poly-ring-xnp1 = {git="https://github.com/AlvinHon/poly-ring", features=["zq", "rand"]}
+poly-ring-xnp1 = {version="0.2", features=["zq", "rand"]}
 rand = "0.9"
 rand_distr = "0.5"

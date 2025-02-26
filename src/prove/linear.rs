@@ -61,7 +61,7 @@ pub struct LinearProofProver<I, const N: usize> {
 
 impl<I, const N: usize> LinearProofProver<I, N>
 where
-    I: Clone + PartialOrd + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
+    I: Clone + PartialOrd + Ord + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Neg<Output = I> + Sub<Output = I>,
 {
     pub fn new(ck: CommitmentKey<I, N>, params: Params<I>) -> Self {
@@ -163,7 +163,7 @@ pub struct LinearProofVerifier<I, const N: usize> {
 
 impl<I, const N: usize> LinearProofVerifier<I, N>
 where
-    I: Clone + PartialOrd + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
+    I: Clone + PartialOrd + Ord + One + Zero + FromPrimitive + ToPrimitive + SampleUniform,
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Neg<Output = I> + Sub<Output = I>,
 {
     pub fn new(ck: CommitmentKey<I, N>, params: Params<I>) -> Self {

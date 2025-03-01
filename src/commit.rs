@@ -5,6 +5,7 @@ use std::ops::{Add, Mul, Sub};
 use num::{FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::{distr::uniform::SampleUniform, Rng};
+use serde::{Deserialize, Serialize};
 
 use crate::{mat::Mat, params::Params, polynomial::random_polynomial_within};
 
@@ -14,8 +15,11 @@ use crate::{mat::Mat, params::Params, polynomial::random_polynomial_within};
 ///
 /// The size of the commitment key contains (n + l) x k polynomials, where n, k, and l are the parameters
 /// defined in the `Params` struct.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CommitmentKey<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CommitmentKey<I, const N: usize>
+where
+    I: Zero,
+{
     pub(crate) a1: Mat<I, N>, // n x k matrix
     pub(crate) a2: Mat<I, N>, // l x k matrix
 }
@@ -127,8 +131,11 @@ where
 /// The commitment in the commitment scheme.
 ///
 /// The size of the commitment contains (n + l) x 1 polynomials, where n and l are the parameters
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Commitment<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Commitment<I, const N: usize>
+where
+    I: Zero,
+{
     /// The commitment value [c1 c2]. A combined matrix is used here for compactness.
     pub(crate) c: Mat<I, N>,
 }
@@ -212,8 +219,11 @@ where
 }
 
 /// The opening in the commitment scheme.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Opening<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Opening<I, const N: usize>
+where
+    I: Zero,
+{
     /// The committed value.
     pub(crate) x: Vec<Polynomial<I, N>>,
     /// The randomness used in the commit method.

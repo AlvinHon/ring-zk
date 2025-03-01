@@ -6,6 +6,7 @@ use num::{integer::Roots, BigUint, FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::{zq::ZqI64, Polynomial};
 use rand::Rng;
 use rand_distr::uniform::SampleUniform;
+use serde::{Deserialize, Serialize};
 
 use crate::{mat::Mat, polynomial::norm_2, CommitmentKey};
 
@@ -14,7 +15,7 @@ use crate::{mat::Mat, polynomial::norm_2, CommitmentKey};
 /// ## Safety
 /// The struct implements Default for instantiation. If you want to use a custom parameter setting,
 /// please carefully check the constraints for the parameters (see the comment-doc for each parameters).
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Params<I> {
     /// Prime modulus q' divided by 2, where q' = 2*d + 1 (mod 4d). Use d = 2 in this library.
     pub q: I, // The formula is defined in Lemma 1 of the paper.

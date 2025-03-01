@@ -55,6 +55,7 @@ use num::{FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::Rng;
 use rand_distr::uniform::SampleUniform;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     challenge_space::random_polynomial_from_challenge_set,
@@ -67,7 +68,10 @@ use crate::{
 /// The prover for the proof of sum. It is used to prove that the prover knows the
 /// opening of commitments to `x'` and a vector of `x_i` such that `x' = g_1 * x_1 + g_2 * x_2 + ...`,
 /// where `g_i` are scalars.
-pub struct SumProofProver<I, const N: usize> {
+pub struct SumProofProver<I, const N: usize>
+where
+    I: Zero,
+{
     params: Params<I>,
     ck: CommitmentKey<I, N>,
 }
@@ -199,7 +203,10 @@ where
 /// The verifier for the proof of sum. It is used to verify that the prover knows the
 /// openings of commitments to `x'` and a vector of `x_i` such that
 /// `x' = g_1 * x_1 + g_2 * x_2 + ...`, where `g_i` are scalars.
-pub struct SumProofVerifier<I, const N: usize> {
+pub struct SumProofVerifier<I, const N: usize>
+where
+    I: Zero,
+{
     params: Params<I>,
     ck: CommitmentKey<I, N>,
 }
@@ -317,8 +324,11 @@ where
 /// in the protocol of proof of sum. It contains the openings of commitments
 /// to `x'` and a vector of `x_i` such that `x' = g_1 * x_1 + g_2 * x_2 + ...`,
 /// where `g_i` are scalars.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SumProofResponseContext<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SumProofResponseContext<I, const N: usize>
+where
+    I: Zero,
+{
     /// vector of openings of x_i where x' = g_0 * x_0 + g_1 * x_1 + ..
     pub openings: Vec<Opening<I, N>>,
     /// opening of x'
@@ -329,8 +339,11 @@ pub struct SumProofResponseContext<I, const N: usize> {
 
 /// Contains the commitments to the values `x'` and `x_i` such that `x' = g_0 * x_0 + g_1 * x_1 + ..`
 /// where `g_i` are scalars, used in the proof of sum.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SumProofCommitment<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SumProofCommitment<I, const N: usize>
+where
+    I: Zero,
+{
     /// commitment to x'
     pub cp: Commitment<I, N>,
     /// commitments to x_i where x' = g_0 * x_0 + g_1 * x_1 + ..
@@ -343,8 +356,11 @@ pub struct SumProofCommitment<I, const N: usize> {
 
 /// Contains the context for the verification phase of the proof of sum.
 /// It is used to verify the response from the prover.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SumProofVerificationContext<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SumProofVerificationContext<I, const N: usize>
+where
+    I: Zero,
+{
     c1p: Mat<I, N>,                  // n x 1 matrix
     c2p: Mat<I, N>,                  // l x 1 matrix
     cs: Vec<(Mat<I, N>, Mat<I, N>)>, // vector of (n x 1, l x 1) matrices
@@ -356,14 +372,20 @@ pub struct SumProofVerificationContext<I, const N: usize> {
 }
 
 /// The challenge created by the verifier in the protocol of proof of sum.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SumProofChallenge<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SumProofChallenge<I, const N: usize>
+where
+    I: Zero,
+{
     d: Polynomial<I, N>,
 }
 
 /// The response from the prover to the verifier in the protocol of proof of sum.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SumProofResponse<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SumProofResponse<I, const N: usize>
+where
+    I: Zero,
+{
     zp: Mat<I, N>,      // k x 1 matrix
     zs: Vec<Mat<I, N>>, // vector of k x 1 matrices
 }

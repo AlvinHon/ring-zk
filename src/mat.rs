@@ -5,14 +5,21 @@ use std::ops::{Add, Mul, Neg, Sub};
 use num::{One, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::distr::uniform::SampleUniform;
+use serde::{Deserialize, Serialize};
 
 /// A matrix over polynomial rings Z\[x]/(x^n+1).
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct Mat<T, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub(crate) struct Mat<T, const N: usize>
+where
+    T: Zero,
+{
     pub(crate) polynomials: Vec<Vec<Polynomial<T, N>>>,
 }
 
-impl<T, const N: usize> Mat<T, N> {
+impl<T, const N: usize> Mat<T, N>
+where
+    T: Zero,
+{
     /// Create a matrix (m x n) from a single polynomial.
     pub(crate) fn from_element(m: usize, n: usize, element: Polynomial<T, N>) -> Self
     where
@@ -25,7 +32,7 @@ impl<T, const N: usize> Mat<T, N> {
     /// Create a diagonal matrix (m x n) with the given polynomial on the diagonal.
     pub(crate) fn diag(m: usize, n: usize, element: Polynomial<T, N>) -> Self
     where
-        T: Clone + One + Zero,
+        T: Clone + One,
         for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Sub<Output = T>,
     {
         let mut polynomials = vec![vec![Polynomial::<T, N>::zero(); n]; m];
@@ -87,7 +94,7 @@ impl<T, const N: usize> Mat<T, N> {
     #[allow(clippy::needless_range_loop)]
     pub fn dot(&self, other: &Mat<T, N>) -> Mat<T, N>
     where
-        T: Clone + One + Zero,
+        T: Clone + One,
         for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Sub<Output = T>,
     {
         // mxn * nxp = mxp
@@ -114,7 +121,7 @@ impl<T, const N: usize> Mat<T, N> {
     #[allow(clippy::needless_range_loop)]
     pub(crate) fn add(&self, other: &Mat<T, N>) -> Mat<T, N>
     where
-        T: Clone + One + Zero,
+        T: Clone + One,
         for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Sub<Output = T>,
     {
         let (m, n) = self.dim();
@@ -139,7 +146,7 @@ impl<T, const N: usize> Mat<T, N> {
     #[allow(clippy::needless_range_loop)]
     pub fn sub(&self, other: &Mat<T, N>) -> Mat<T, N>
     where
-        T: Clone + One + Zero,
+        T: Clone + One,
         for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Neg<Output = T> + Sub<Output = T>,
     {
         let (m, n) = self.dim();
@@ -160,7 +167,7 @@ impl<T, const N: usize> Mat<T, N> {
     /// Compoentwise multiplication of a matrix and a polynomial.
     pub(crate) fn componentwise_mul(&self, element: &Polynomial<T, N>) -> Mat<T, N>
     where
-        T: Clone + One + Zero,
+        T: Clone + One,
         for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Sub<Output = T>,
     {
         let mut polynomials = self.polynomials.clone();
@@ -412,5 +419,21 @@ mod tests {
 
         assert_eq!(b.polynomials, vec![vec![a_0.clone()]]);
         assert_eq!(c.polynomials, vec![vec![a_1.clone()]]);
+    }
+
+    #[test]
+    fn test_serde() {
+        let a = Mat {
+            polynomials: vec![vec![Polynomial::<i32, N>::new(vec![1, 2, 3])]],
+        };
+
+        let serialized_a = bincode::serialize(&a).unwrap();
+        // - bincode uses 8 bytes for the length of the vector
+        // - polynomial size = 8 + 3 * sizeof(i32) = 8 + 3 * 4 = 20
+        // => 8 + 8 + 20 = 36
+        assert_eq!(serialized_a.len(), 36);
+
+        let deserialized_a = bincode::deserialize(&serialized_a).unwrap();
+        assert_eq!(a, deserialized_a);
     }
 }

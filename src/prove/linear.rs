@@ -43,6 +43,7 @@ use num::{FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::Rng;
 use rand_distr::uniform::SampleUniform;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     challenge_space::random_polynomial_from_challenge_set,
@@ -54,7 +55,10 @@ use crate::{
 
 /// The prover for the proof of linear relation. It is used to prove that the prover knows the
 /// openings of commitments to `x'` and `x` such that `x' = g * x` for scalar `g`.
-pub struct LinearProofProver<I, const N: usize> {
+pub struct LinearProofProver<I, const N: usize>
+where
+    I: Zero,
+{
     params: Params<I>,
     ck: CommitmentKey<I, N>,
 }
@@ -156,7 +160,10 @@ where
 
 /// The verifier for the proof of linear relation. It is used to verify that the prover knows the
 /// openings of commitments to `x'` and `x` such that `x' = g * x` for scalar `g`.
-pub struct LinearProofVerifier<I, const N: usize> {
+pub struct LinearProofVerifier<I, const N: usize>
+where
+    I: Zero,
+{
     params: Params<I>,
     ck: CommitmentKey<I, N>,
 }
@@ -246,8 +253,11 @@ where
 /// The response created by the prover upon receiving the challenge from the verifier
 /// in the protocol of proof of linear relation. It contains the openings of commitments
 /// to `x'` and `x` such that `x' = g * x` for scalar `g`.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct LinearProofResponseContext<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LinearProofResponseContext<I, const N: usize>
+where
+    I: Zero,
+{
     /// The opening of the commitment to `x` s.t. `x' = g * x`.
     pub opening: Opening<I, N>,
     /// The opening of the commitment to `x'` s.t. `x' = g * x`.
@@ -258,8 +268,11 @@ pub struct LinearProofResponseContext<I, const N: usize> {
 
 /// Contains the commitments to the values `x'` and `x` such that `x' = g * x`, used in
 /// the proof of linear relation.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct LinearProofCommitment<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LinearProofCommitment<I, const N: usize>
+where
+    I: Zero,
+{
     /// Commitment to value `x` s.t. `x' = g * x`.
     pub c: Commitment<I, N>,
     /// Commitment to value `x'` s.t. `x' = g * x`.
@@ -273,8 +286,11 @@ pub struct LinearProofCommitment<I, const N: usize> {
 
 /// Contains the context for the verification phase of the proof of linear relation.
 /// It is used to verify the response from the prover.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct LinearProofVerificationContext<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LinearProofVerificationContext<I, const N: usize>
+where
+    I: Zero,
+{
     c1: Mat<I, N>, // n x 1 matrix
     c2: Mat<I, N>, // l x 1 matrix
 
@@ -290,14 +306,20 @@ pub struct LinearProofVerificationContext<I, const N: usize> {
 }
 
 /// The challenge created by the verifier in the protocol of proof of linear relation.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct LinearProofChallenge<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LinearProofChallenge<I, const N: usize>
+where
+    I: Zero,
+{
     d: Polynomial<I, N>,
 }
 
 /// The response from the prover to the verifier in the protocol of proof of linear relation.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct LinearProofResponse<I, const N: usize> {
+pub struct LinearProofResponse<I, const N: usize>
+where
+    I: Zero,
+{
     z: Mat<I, N>,  // k x 1 matrix
     zp: Mat<I, N>, // k x 1 matrix
 }

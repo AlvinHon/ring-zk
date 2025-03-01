@@ -41,6 +41,7 @@ use num::{FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::Rng;
 use rand_distr::uniform::SampleUniform;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     challenge_space::random_polynomial_from_challenge_set,
@@ -52,7 +53,10 @@ use crate::{
 
 /// The prover for the proof of linear relation. It is used to prove that the prover knows the
 /// opening of commitment to a value.
-pub struct OpenProofProver<I, const N: usize> {
+pub struct OpenProofProver<I, const N: usize>
+where
+    I: Zero,
+{
     params: Params<I>,
     ck: CommitmentKey<I, N>,
 }
@@ -115,7 +119,10 @@ where
 
 /// The verifier for the proof of opening a commitment. It is used to verify that the prover knows
 /// the opening of commitment to a value.
-pub struct OpenProofVerifier<I, const N: usize> {
+pub struct OpenProofVerifier<I, const N: usize>
+where
+    I: Zero,
+{
     params: Params<I>,
     ck: CommitmentKey<I, N>,
 }
@@ -170,15 +177,21 @@ where
 /// The response created by the prover upon receiving the challenge from the verifier
 /// in the protocol of proof of opening a commitment. It contains the opening of commitment
 /// to value `x`.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct OpenProofResponseContext<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OpenProofResponseContext<I, const N: usize>
+where
+    I: Zero,
+{
     pub opening: Opening<I, N>,
     y: Mat<I, N>, // k x 1 matrix
 }
 
 /// Contains the commitment to the values `x`.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct OpenProofCommitment<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OpenProofCommitment<I, const N: usize>
+where
+    I: Zero,
+{
     /// Commitment to value `x`.
     pub c: Commitment<I, N>,
     t: Vec<Polynomial<I, N>>, // n x 1 matrix
@@ -186,21 +199,30 @@ pub struct OpenProofCommitment<I, const N: usize> {
 
 /// Contains the context for the verification phase of the proof of opening a commitment.
 /// It is used to verify the response from the prover.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct OpenProofVerificationContext<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OpenProofVerificationContext<I, const N: usize>
+where
+    I: Zero,
+{
     c1: Mat<I, N>,            // n x 1 matrix
     t: Vec<Polynomial<I, N>>, // n x 1 matrix
     d: Polynomial<I, N>,
 }
 
 /// The challenge created by the verifier in the protocol of proof of opening a commitment.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct OpenProofChallenge<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OpenProofChallenge<I, const N: usize>
+where
+    I: Zero,
+{
     d: Polynomial<I, N>,
 }
 
 /// The response from the prover to the verifier in the protocol of proof of opening a commitment.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct OpenProofResponse<I, const N: usize> {
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OpenProofResponse<I, const N: usize>
+where
+    I: Zero,
+{
     z: Mat<I, N>, // k x 1 matrix
 }

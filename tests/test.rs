@@ -1,4 +1,4 @@
-use poly_ring_xnp1::{rand::CoeffsRangeInclusive, zq::ZqI64, Polynomial};
+use poly_ring_xnp1::{rand::CoeffsRangeInclusive, Polynomial};
 use rand::Rng;
 use ring_zk::{
     LinearProofProver, LinearProofVerifier, OpenProofProver, OpenProofVerifier, Params,
@@ -13,7 +13,7 @@ fn test_open_proof() {
     let rng = &mut rand::rng();
 
     let params = Params::default();
-    let bound = (params.q.clone() / ZqI64::new(2)).into();
+    let bound = params.q.clone().into();
 
     for _ in 0..100 {
         let ck = params.generate_commitment_key(rng);
@@ -36,7 +36,7 @@ fn test_linear_proof() {
     let rng = &mut rand::rng();
 
     let params = Params::default();
-    let bound = (params.q.clone() / ZqI64::new(2)).into();
+    let bound = params.q.clone().into();
 
     for _ in 0..100 {
         let ck = params.generate_commitment_key(rng);
@@ -61,7 +61,7 @@ fn test_sum_proof() {
     let rng = &mut rand::rng();
 
     let params = Params::default();
-    let bound = (params.q.clone() / ZqI64::new(2)).into();
+    let bound = params.q.clone().into();
     const VL: usize = 4;
 
     for _ in 0..100 {

@@ -39,7 +39,7 @@ use std::ops::{Add, Mul, Neg, Sub};
 
 use num::{FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
-use rand::Rng;
+use rand::RngExt;
 use rand_distr::uniform::SampleUniform;
 use serde::{Deserialize, Serialize};
 
@@ -79,7 +79,7 @@ where
     /// Panics if the length of `x` is not equal to the length of `l` defined in the `Params` struct.
     pub fn commit(
         &self,
-        rng: &mut impl Rng,
+        rng: &mut impl RngExt,
         x: Vec<Polynomial<I, N>>,
     ) -> (OpenProofResponseContext<I, N>, OpenProofCommitment<I, N>) {
         let (opening, c) = self.ck.commit(rng, x, &self.params);
@@ -142,7 +142,7 @@ where
     /// verify the response in a later phase of the protocol.
     pub fn generate_challenge(
         &self,
-        rng: &mut impl Rng,
+        rng: &mut impl RngExt,
         commitment: OpenProofCommitment<I, N>,
     ) -> (OpenProofVerificationContext<I, N>, OpenProofChallenge<I, N>) {
         let d = random_polynomial_from_challenge_set(rng, self.params.kappa);

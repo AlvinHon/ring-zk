@@ -1,5 +1,5 @@
 use poly_ring_xnp1::{rand::CoeffsRangeInclusive, Polynomial};
-use rand::Rng;
+use rand::RngExt;
 use ring_zk::{
     LinearProofProver, LinearProofVerifier, OpenProofProver, OpenProofVerifier, Params,
     SumProofProver, SumProofVerifier,
@@ -92,7 +92,7 @@ fn test_sum_proof() {
     }
 }
 
-pub(crate) fn random_value(rng: &mut impl Rng, bound: i64) -> Vec<i64> {
+pub(crate) fn random_value(rng: &mut impl RngExt, bound: i64) -> Vec<i64> {
     let range = CoeffsRangeInclusive::from(-bound..=bound);
     let p: Polynomial<i64, N> = rng.random_range(range);
     p.iter().copied().take(rng.random_range(1..=N)).collect()

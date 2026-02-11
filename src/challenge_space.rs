@@ -4,13 +4,13 @@ use std::ops::{Add, Mul, Neg, Sub};
 
 use num::{One, Zero};
 use poly_ring_xnp1::Polynomial;
-use rand::{distr::uniform::SampleUniform, seq::SliceRandom, Rng};
+use rand::{distr::uniform::SampleUniform, seq::SliceRandom, RngExt};
 
 /// Create a random polynomial in Challenge Space C.
 /// The Challenge Space C is defined as  `{c in R_q | norm_infinity(c) = 1, norm_1(c) = kappa}`.
 /// In other words, there exists exactly `kappa` amount of coefficients = 1 or -1, and the rest are 0.
 pub(crate) fn random_polynomial_from_challenge_set<I, const N: usize>(
-    rng: &mut impl Rng,
+    rng: &mut impl RngExt,
     kappa: usize,
 ) -> Polynomial<I, N>
 where
@@ -37,7 +37,7 @@ where
 /// a special property that the returned polynomial is invertible in `R_q`.
 #[allow(unused)]
 pub(crate) fn random_polynomial_from_challenge_set_difference<I, const N: usize>(
-    rng: &mut impl Rng,
+    rng: &mut impl RngExt,
     kappa: usize,
 ) -> Polynomial<I, N>
 where

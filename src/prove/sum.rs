@@ -53,7 +53,7 @@ use std::ops::{Add, Mul, Neg, Sub};
 
 use num::{FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
-use rand::Rng;
+use rand::RngExt;
 use rand_distr::uniform::SampleUniform;
 use serde::{Deserialize, Serialize};
 
@@ -98,7 +98,7 @@ where
     /// - the length of `x_i` is not equal to the length of `l` defined in the `Params` struct.
     pub fn commit(
         &self,
-        rng: &mut impl Rng,
+        rng: &mut impl RngExt,
         gs: Vec<Polynomial<I, N>>,
         xs: Vec<Vec<Polynomial<I, N>>>,
     ) -> (SumProofResponseContext<I, N>, SumProofCommitment<I, N>) {
@@ -227,7 +227,7 @@ where
     /// verify the response in a later phase of the protocol.
     pub fn generate_challenge(
         &self,
-        rng: &mut impl Rng,
+        rng: &mut impl RngExt,
         commitment: SumProofCommitment<I, N>,
     ) -> (SumProofVerificationContext<I, N>, SumProofChallenge<I, N>) {
         let d = random_polynomial_from_challenge_set(rng, self.params.kappa);

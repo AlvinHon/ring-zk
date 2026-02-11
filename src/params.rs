@@ -4,8 +4,7 @@ use std::ops::{Add, Mul, Sub};
 
 use num::{integer::Roots, BigUint, FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::{zq::ZqI64, Polynomial};
-use rand::Rng;
-use rand_distr::uniform::SampleUniform;
+use rand::{distr::uniform::SampleUniform, RngExt};
 use serde::{Deserialize, Serialize};
 
 use crate::{mat::Mat, polynomial::norm_2, CommitmentKey};
@@ -49,7 +48,7 @@ where
     #[inline]
     pub fn generate_commitment_key<const N: usize>(
         &self,
-        rng: &mut impl Rng,
+        rng: &mut impl RngExt,
     ) -> CommitmentKey<I, N> {
         CommitmentKey::new(rng, self)
     }

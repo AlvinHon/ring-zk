@@ -4,7 +4,7 @@ use std::ops::{Add, Mul, Sub};
 
 use num::{FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::Polynomial;
-use rand::{distr::uniform::SampleUniform, Rng};
+use rand::{distr::uniform::SampleUniform, RngExt};
 use serde::{Deserialize, Serialize};
 
 use crate::{mat::Mat, params::Params, polynomial::random_polynomial_within};
@@ -30,7 +30,7 @@ where
     for<'a> &'a I: Add<Output = I> + Mul<Output = I> + Sub<Output = I>,
 {
     /// Generate a random new commitment key given the parameters.
-    pub(crate) fn new(rng: &mut impl Rng, params: &Params<I>) -> Self {
+    pub(crate) fn new(rng: &mut impl RngExt, params: &Params<I>) -> Self {
         let Params { q, n, k, l, .. } = params.clone();
         // Defined in equation (5) of the paper:
         // a1 = [I_n a1'], where a1 is a polynomial matrix of size n x (k-n)
@@ -87,7 +87,7 @@ where
     /// Panics if the length of `x` is not equal to the length of `l` defined in the `Params` struct.
     pub fn commit(
         &self,
-        rng: &mut impl Rng,
+        rng: &mut impl RngExt,
         x: Vec<Polynomial<I, N>>,
         params: &Params<I>,
     ) -> (Opening<I, N>, Commitment<I, N>) {

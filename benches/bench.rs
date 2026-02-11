@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use criterion::{criterion_group, criterion_main, Criterion};
 use poly_ring_xnp1::{rand::CoeffsRangeInclusive, zq::ZqI64, Polynomial};
-use rand::{rng, Rng};
+use rand::{rng, RngExt};
 use ring_zk::{
     LinearProofProver, LinearProofVerifier, OpenProofProver, OpenProofVerifier, Params,
     SumProofProver, SumProofVerifier,
@@ -351,7 +351,7 @@ fn setup_sum_proof_elements() -> (
     (params, prover, verifier)
 }
 
-fn random_value(rng: &mut impl Rng, bound: i64) -> Vec<i64> {
+fn random_value(rng: &mut impl RngExt, bound: i64) -> Vec<i64> {
     let range = CoeffsRangeInclusive::from(-bound..=bound);
     let p: Polynomial<i64, N> = rng.random_range(range);
     p.iter().copied().take(rng.random_range(1..=N)).collect()

@@ -4,7 +4,7 @@ use std::ops::{Add, Mul, Sub};
 
 use num::{BigInt, BigUint, FromPrimitive, One, ToPrimitive, Zero};
 use poly_ring_xnp1::{rand::CoeffsRangeInclusive, Polynomial};
-use rand::{distr::uniform::SampleUniform, Rng};
+use rand::{distr::uniform::SampleUniform, RngExt};
 use rand_distr::{Distribution, Normal};
 
 /// Returns a random polynomial with coefficients in the range `[-bound, bound]`.
@@ -12,7 +12,7 @@ use rand_distr::{Distribution, Normal};
 /// ## Safety
 /// **bound** must be positive.
 pub(crate) fn random_polynomial_within<I, const N: usize>(
-    rng: &mut impl Rng,
+    rng: &mut impl RngExt,
     bound: I,
 ) -> Polynomial<I, N>
 where
@@ -26,7 +26,7 @@ where
 
 /// Returns a random polynomial with coefficients in the normal distribution.
 pub(crate) fn random_polynomial_in_normal_distribution<I, const N: usize>(
-    rng: &mut impl Rng,
+    rng: &mut impl RngExt,
     mean: f64,
     std_dev: f64,
 ) -> Polynomial<I, N>

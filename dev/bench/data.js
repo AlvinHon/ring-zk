@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770997744641,
+  "lastUpdate": 1770999442971,
   "repoUrl": "https://github.com/AlvinHon/ring-zk",
   "entries": {
     "Rust Benchmark": [
@@ -163,6 +163,90 @@ window.BENCHMARK_DATA = {
           {
             "name": "sum_proof_verify",
             "value": 28740207.471772492,
+            "unit": "ns"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alvin.cpp@gmail.com",
+            "name": "AlvinHon",
+            "username": "AlvinHon"
+          },
+          "committer": {
+            "email": "alvin.cpp@gmail.com",
+            "name": "AlvinHon",
+            "username": "AlvinHon"
+          },
+          "distinct": true,
+          "id": "fd7086f1fddbfab1c337ef9234e74f2a745edee0",
+          "message": "Add workflow and benchmark badges to readme",
+          "timestamp": "2026-02-14T00:14:55+08:00",
+          "tree_id": "b9e6b620c364a0fc7a6f36b5fd7a024e984b5964",
+          "url": "https://github.com/AlvinHon/ring-zk/commit/fd7086f1fddbfab1c337ef9234e74f2a745edee0"
+        },
+        "date": 1770999442689,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "linear_proof_commit",
+            "value": 14991811.308809524,
+            "unit": "ns"
+          },
+          {
+            "name": "linear_proof_create_response",
+            "value": 6573610.194398148,
+            "unit": "ns"
+          },
+          {
+            "name": "linear_proof_generate_challenge",
+            "value": 4458.755120697884,
+            "unit": "ns"
+          },
+          {
+            "name": "linear_proof_verify",
+            "value": 11051624.420515873,
+            "unit": "ns"
+          },
+          {
+            "name": "open_proof_commit",
+            "value": 5769668.626785714,
+            "unit": "ns"
+          },
+          {
+            "name": "open_proof_create_response",
+            "value": 3072535.8561044973,
+            "unit": "ns"
+          },
+          {
+            "name": "open_proof_generate_challenge",
+            "value": 3157.981537020544,
+            "unit": "ns"
+          },
+          {
+            "name": "open_proof_verify",
+            "value": 3508299.955383598,
+            "unit": "ns"
+          },
+          {
+            "name": "sum_proof_commit",
+            "value": 39243963.95761905,
+            "unit": "ns"
+          },
+          {
+            "name": "sum_proof_commit_2",
+            "value": 10001.347507685514,
+            "unit": "ns"
+          },
+          {
+            "name": "sum_proof_create_response",
+            "value": 15284695.584214289,
+            "unit": "ns"
+          },
+          {
+            "name": "sum_proof_verify",
+            "value": 28689209.43335979,
             "unit": "ns"
           }
         ]

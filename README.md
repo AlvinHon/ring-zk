@@ -1,3 +1,10 @@
+[![workflow status]][workflow] [![benchmark badge]][benchmark]
+
+[workflow status]: https://github.com/AlvinHon/ring-zk/actions/workflows/build_and_test.yml/badge.svg?branch=main
+[workflow]: https://github.com/AlvinHon/ring-zk/actions/workflows/build_and_test.yml
+[benchmark badge]:https://img.shields.io/badge/Benchmark-here-blue
+[benchmark]: https://alvinhon.github.io/ring-zk/dev/bench/
+
 # Efficient Zero-Knowledge Proofs for Commitments from RLWE
 
 Rust implementation of the zero-knowledge proof system for commitments from the Ring Learning With Errors (RLWE) assumption. The proof system is based on the paper [More Efficient Commitments from Structured Lattice Assumptions](https://eprint.iacr.org/2016/997).
